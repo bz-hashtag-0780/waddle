@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Input from './Input';
-import Button from '../frontend/components/Button';
-import Card from '../frontend/components/Card';
-import { registerHotspot } from '../services/flow';
+import Button from './Button';
+import Card from './Card';
+import { registerHotspot } from '@/services/flow';
 
 interface HotspotRegistrationFormProps {
 	onSuccess?: (hotspotId: string) => void;

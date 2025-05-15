@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import Card from '../frontend/components/Card';
-import { Hotspot } from '../types/flow';
+import Card from './Card';
+import { Hotspot } from '@/types/flow';
 
 interface HotspotListProps {
 	hotspots: Hotspot[];

@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, AuthContextType } from '../../types/auth';
+import { User, AuthContextType } from '../types/auth';
 import {
 	checkUserLoggedIn,
 	loginWithMagic,
 	logoutFromMagic,
 	initFCL,
-} from '../../services/auth';
+} from '../services/auth';
 
 // Create Auth Context
 const AuthContext = createContext<AuthContextType>({

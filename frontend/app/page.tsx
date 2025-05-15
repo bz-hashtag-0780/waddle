@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useAuth } from '../contexts/AuthContext';
-import Button from '../components/Button';
+import { useAuth } from '@/contexts/AuthContext';
+import Button from '@/components/Button';
 
 export default function Home() {
 	const { user } = useAuth();

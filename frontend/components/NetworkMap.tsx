@@ -1,21 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Hotspot } from '../../types/flow';
-
-// Fix for Leaflet marker icons in Next.js
-useEffect(() => {
-	// This is to fix the missing icon issue with react-leaflet
-	const L = require('leaflet');
-	delete L.Icon.Default.prototype._getIconUrl;
-
-	L.Icon.Default.mergeOptions({
-		iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png')
-			.default,
-		iconUrl: require('leaflet/dist/images/marker-icon.png').default,
-		shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
-	});
-}, []);
+import { Hotspot } from '@/types/flow';
 
 interface NetworkMapProps {
 	hotspots: Hotspot[];
@@ -38,7 +24,22 @@ const NetworkMap: React.FC<NetworkMapProps> = ({
 	const [isMapReady, setIsMapReady] = useState(false);
 
 	useEffect(() => {
-		setIsMapReady(true);
+		// This is to fix the missing icon issue with react-leaflet
+		if (typeof window !== 'undefined') {
+			import('leaflet').then((L) => {
+				// Need to use any type here because _getIconUrl is not defined in the type
+				const icon = L.Icon.Default.prototype as any;
+				delete icon._getIconUrl;
+
+				L.Icon.Default.mergeOptions({
+					iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+					iconUrl: '/leaflet/marker-icon.png',
+					shadowUrl: '/leaflet/marker-shadow.png',
+				});
+
+				setIsMapReady(true);
+			});
+		}
 	}, []);
 
 	if (loading) {
