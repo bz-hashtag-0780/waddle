@@ -1,0 +1,40 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@magic-ext/flow": "^24.0.6",
+    "@onflow/fcl": "^1.17.0",
+    "@onflow/types": "^1.4.1",
+    "chart.js": "^4.4.9",
+    "leaflet": "^1.9.4",
+    "magic-sdk": "^29.0.6",
+    "mapbox-gl": "^3.12.0",
+    "next": "15.3.2",
+    "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^19.0.0",
+    "react-leaflet": "^5.0.0",
+    "react-map-gl": "^8.0.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.17",
+    "@types/mapbox-gl": "^3.4.1",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/react-leaflet": "^2.8.3",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
