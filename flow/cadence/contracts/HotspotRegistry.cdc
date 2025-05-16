@@ -35,6 +35,26 @@ access(all) contract HotspotRegistry {
             self.lastUpdated = getCurrentBlock().timestamp
             self.totalUptime = 0.0
         }
+
+        // Setter methods
+        access(all) fun setLatLng(lat: UFix64, lng: UFix64) {
+            self.lat = lat
+            self.lng = lng
+        }
+
+        access(all) fun setOnlineStatus(online: Bool, currentTime: UFix64) {
+            // If going from online to offline, add to total uptime
+            if self.online && !online {
+                self.totalUptime = self.totalUptime + (currentTime - self.lastUpdated)
+            }
+            
+            self.online = online
+            self.lastUpdated = currentTime
+        }
+
+        access(all) fun addUptime(amount: UFix64) {
+            self.totalUptime = self.totalUptime + amount
+        }
     }
 
     // Registry of all hotspots
@@ -60,16 +80,11 @@ access(all) contract HotspotRegistry {
 
     access(all) resource Admin {
         access(all) fun updateHotspotStatus(id: UInt64, online: Bool) {
-            if let hotspot = &HotspotRegistry.hotspots[id] as &Hotspot? {
+            if var hotspot = &HotspotRegistry.hotspots[id] as &Hotspot? {
                 let now = getCurrentBlock().timestamp
                 
-                // If going from online to offline, add to total uptime
-                if hotspot.online && !online {
-                    hotspot.totalUptime = hotspot.totalUptime + (now - hotspot.lastUpdated)
-                }
-                
-                hotspot.online = online
-                hotspot.lastUpdated = now
+                // Update the hotspot status using the setter method
+                hotspot.setOnlineStatus(online: online, currentTime: now)
                 
                 emit HotspotStatusChanged(id: id, online: online)
             }
@@ -77,9 +92,9 @@ access(all) contract HotspotRegistry {
 
         // Update hotspot location
         access(all) fun updateHotspotLocation(id: UInt64, lat: UFix64, lng: UFix64) {
-            if let hotspot = &HotspotRegistry.hotspots[id] as &Hotspot? {
-                hotspot.lat = lat
-                hotspot.lng = lng
+            if var hotspot = &HotspotRegistry.hotspots[id] as &Hotspot? {
+                // Update location using the setter method
+                hotspot.setLatLng(lat: lat, lng: lng)
                 
                 emit HotspotLocationUpdated(id: id, lat: lat, lng: lng)
             }

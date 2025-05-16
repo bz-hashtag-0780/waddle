@@ -1,6 +1,7 @@
 import { Magic as MagicBase } from 'magic-sdk';
 import { FlowExtension } from '@magic-ext/flow';
-import * as fcl from '@onflow/fcl';
+// Import FCL configuration
+import './fcl-config';
 import { User } from '../types/auth';
 
 // Define Magic type with Flow Extension
@@ -14,11 +15,8 @@ export const initMagic = () => {
 	if (typeof window === 'undefined') return null;
 
 	if (!magic) {
-		// Get the Flow network configuration
-		const flowAccessNode =
-			process.env.NEXT_PUBLIC_FLOW_ACCESS_NODE ||
-			'https://rest-testnet.onflow.org';
-		const isMainnet = flowAccessNode.includes('mainnet');
+		// Get the Flow network configuration - we're using testnet
+		const flowAccessNode = 'https://rest-testnet.onflow.org';
 
 		magic = new MagicBase(
 			process.env.NEXT_PUBLIC_MAGIC_API_KEY || 'pk_live_demo',
@@ -26,7 +24,7 @@ export const initMagic = () => {
 				extensions: [
 					new FlowExtension({
 						rpcUrl: flowAccessNode,
-						network: isMainnet ? 'mainnet' : 'testnet',
+						network: 'testnet',
 					}),
 				],
 			}
@@ -36,19 +34,10 @@ export const initMagic = () => {
 	return magic;
 };
 
-// Initialize Flow Client Library
+// Initialize Flow Client Library - Now using our FCL config
 export const initFCL = () => {
-	fcl.config()
-		.put(
-			'accessNode.api',
-			process.env.NEXT_PUBLIC_FLOW_ACCESS_NODE ||
-				'https://rest-testnet.onflow.org'
-		)
-		.put(
-			'discovery.wallet',
-			process.env.NEXT_PUBLIC_FLOW_WALLET_DISCOVERY ||
-				'https://fcl-discovery.onflow.org/testnet/authn'
-		);
+	// Configuration is already loaded from fcl-config.ts
+	// No need to configure here
 };
 
 // Login with Magic Link

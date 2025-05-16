@@ -7,15 +7,31 @@
 			}
 		},
 		"HotspotOperatorNFT": {
-			"source": "flow/cadence/contracts/HotspotOperatorNFT.cdc",
+			"source": "./flow/cadence/contracts/HotspotOperatorNFT.cdc",
 			"aliases": {
-				"testing": "0000000000000007"
+				"testing": "0000000000000007",
+				"testnet": "0x010f2d483a538e7e"
 			}
 		},
 		"HotspotRegistry": {
-			"source": "flow/cadence/contracts/HotspotRegistry.cdc",
+			"source": "./flow/cadence/contracts/HotspotRegistry.cdc",
 			"aliases": {
-				"testing": "0000000000000007"
+				"testing": "0000000000000007",
+				"testnet": "0x010f2d483a538e7e"
+			}
+		},
+		"UptimeProof": {
+			"source": "./flow/cadence/contracts/UptimeProof.cdc",
+			"aliases": {
+				"testing": "0000000000000007",
+				"testnet": "0x010f2d483a538e7e"
+			}
+		},
+		"FIVEGCOIN": {
+			"source": "./flow/cadence/contracts/FIVEGCOIN.cdc",
+			"aliases": {
+				"testing": "0000000000000007",
+				"testnet": "0x010f2d483a538e7e"
 			}
 		}
 	},
@@ -151,6 +167,23 @@
 				"type": "file",
 				"location": "emulator-account.pkey"
 			}
+		},
+		"testnet-account": {
+			"address": "0x010f2d483a538e7e",
+			"key": {
+				"type": "file",
+				"location": "testnet-account.pkey"
+			}
+		}
+	},
+	"deployments": {
+		"testnet": {
+			"testnet-account": [
+				"HotspotOperatorNFT",
+				"FIVEGCOIN",
+				"HotspotRegistry",
+				"UptimeProof"
+			]
 		}
 	}
 }

@@ -3,6 +3,7 @@
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '../contexts/AuthContext';
 import './globals.css';
+import '../services/fcl-config';
 
 const inter = Inter({ subsets: ['latin'] });
 

@@ -1,13 +1,14 @@
 import * as fcl from '@onflow/fcl';
+// Note: t is used in the arg callbacks for transaction arguments
 import * as t from '@onflow/types';
 import { Hotspot, UptimeStats } from '../types/flow';
 
-// Contract addresses (will be replaced with actual deployed contract addresses)
+// Contract addresses (updated with testnet deployed contract addresses)
 const CONTRACT_ADDRESSES = {
-	HotspotOperatorNFT: '0xf8d6e0586b0a20c7',
-	HotspotRegistry: '0xf8d6e0586b0a20c7',
-	UptimeProof: '0xf8d6e0586b0a20c7',
-	RewardToken: '0xf8d6e0586b0a20c7',
+	HotspotOperatorNFT: '0x010f2d483a538e7e',
+	HotspotRegistry: '0x010f2d483a538e7e',
+	UptimeProof: '0x010f2d483a538e7e',
+	RewardToken: '0x010f2d483a538e7e',
 };
 
 // Mint an NFT for a user (simulation mode)
