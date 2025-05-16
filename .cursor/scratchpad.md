@@ -278,6 +278,8 @@ All smart contracts have been successfully deployed to Flow testnet. The fronten
 3. Make regular backups of critical files
 4. When using testnet, account for potential delays and unreliability
 5. Keep a development version that works offline as a backup for demos
+6. DO NOT modify or create tailwind.config.js as it can break the entire site
+7. The project is working with the existing postcss.config.mjs for styling
 
 ## Risk Assessment and Mitigation Strategies
 
@@ -382,3 +384,101 @@ All smart contracts have been successfully deployed to Flow testnet. The fronten
     -   All features work identically to development environment
     -   Load times are acceptable (<3s initial load)
     -   No console errors in production
+
+## Detailed Frontend-Contract Integration Plan
+
+To properly integrate our frontend with the deployed smart contracts on Flow testnet, we need to complete the following specific tasks:
+
+### 1. Update Service Layer (flow.ts)
+
+-   **Replace Simulation Mode with Real Calls**
+
+    -   Convert all mock data returns to actual FCL script executions
+    -   Remove hardcoded test data and simulation flags
+    -   Implement proper error handling for blockchain interactions
+
+-   **Implement Transaction Functions**
+
+    -   Update `mintHotspotOperatorNFT()` to call the actual contract method
+    -   Update `registerHotspot()` to perform real registration with the NFT as collateral
+    -   Update `submitUptimeProof()` to send real uptime proof transactions
+    -   Add proper transaction result handling and status tracking
+
+-   **Implement Query Functions**
+    -   Replace mock data in `getAllHotspots()` with actual blockchain queries
+    -   Update `getHotspotUptimeStats()` to fetch real data from `UptimeProof` contract
+    -   Implement `checkHotspotOperatorNFTOwnership()` to verify actual NFT ownership
+    -   Add new function to get FIVEGCOIN balance for users
+
+### 2. Transaction Script Development
+
+-   **Create and Test Cadence Scripts**
+
+    -   Implement a script to read all registered hotspots
+    -   Implement a script to retrieve uptime proofs for a specific hotspot
+    -   Implement a script to query user token balances
+
+-   **Create and Test Cadence Transactions**
+    -   Create a transaction to mint NFT to user address
+    -   Create a transaction to register hotspot with location data
+    -   Create a transaction to submit uptime proofs
+    -   Create a transaction to claim rewards
+
+### 3. User Authentication Integration
+
+-   **Account Setup for New Users**
+
+    -   Ensure new users can receive an NFT through onboarding
+    -   Set up Flow account resources needed for NFT and token storage
+    -   Create initialization transaction for first-time users
+
+-   **Account Validation**
+    -   Verify user has proper storage paths configured
+    -   Check if user needs resource setup before transactions
+
+### 4. Real-time Data Updates
+
+-   **Implement Event Listeners**
+
+    -   Set up FCL event subscription for hotspot registration events
+    -   Set up listeners for uptime proof submissions
+    -   Set up listeners for reward distribution events
+
+-   **Dashboard Reactivity**
+    -   Update dashboard UI when new blockchain events occur
+    -   Implement polling for data that doesn't emit events
+    -   Add loading states during transaction processing
+
+### 5. Testing and Verification
+
+-   **Contract Method Testing**
+
+    -   Test each contract method from frontend individually
+    -   Verify arguments are correctly passed to contract methods
+    -   Confirm events are properly emitted and captured
+
+-   **End-to-End Flow Testing**
+    -   Test complete user flows (registration → uptime proof → rewards)
+    -   Verify state changes are reflected correctly in UI
+    -   Test error conditions and recovery paths
+
+### 6. Performance Optimization
+
+-   **Caching Layer**
+
+    -   Implement client-side caching for frequently accessed data
+    -   Set up intelligent refetching policies for blockchain data
+    -   Optimize query batch sizes for multiple data fetches
+
+-   **Transaction Batching**
+    -   Group related transactions when possible
+    -   Implement transaction queuing for better UX
+
+### Success Criteria:
+
+-   All simulation mode code is replaced with real blockchain interactions
+-   User can mint NFTs, register hotspots, and submit uptime proofs on testnet
+-   Dashboard displays real data from blockchain
+-   Real-time updates work when blockchain state changes
+-   Error handling gracefully manages failed transactions
+-   Performance remains responsive even with blockchain latency
