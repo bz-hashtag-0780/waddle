@@ -2,16 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/AuthContext';
-import Layout from '../../components/Layout';
-import Card from '../../components/Card';
-import Button from '../../components/Button';
-import HotspotList from '../../components/HotspotList';
-import { Hotspot } from '../../types/flow';
+import { useAuth } from '@/contexts/AuthContext';
+import Layout from '@/components/Layout';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import HotspotList from '@/components/HotspotList';
+import { Hotspot } from '@/types/flow';
 import {
 	getAllHotspots,
 	checkHotspotOperatorNFTOwnership,
-} from '../../services/flow';
+} from '@/services/flow';
 
 const DashboardPage = () => {
 	const router = useRouter();
@@ -196,7 +196,7 @@ const DashboardPage = () => {
 											<div className="text-lg font-medium text-gray-900">
 												{isLoading
 													? '...'
-													: `${totalRewards} WADL`}
+													: `${totalRewards} $5G`}
 											</div>
 										</dd>
 									</dl>
@@ -234,7 +234,7 @@ const DashboardPage = () => {
 											<div className="text-lg font-medium text-gray-900">
 												{isLoading
 													? '...'
-													: `${pendingRewards} WADL`}
+													: `${pendingRewards} $5G`}
 											</div>
 										</dd>
 									</dl>

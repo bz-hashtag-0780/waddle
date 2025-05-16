@@ -97,7 +97,7 @@ export default function Home() {
 										href="/"
 										className="text-2xl font-bold text-blue-600"
 									>
-										Waddle 5G
+										Waddle $5G
 									</Link>
 									<div className="-mr-2 flex items-center md:hidden">
 										<button

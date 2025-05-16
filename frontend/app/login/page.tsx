@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/Card';
@@ -12,6 +12,23 @@ const LoginPage = () => {
 	const { login, isLoading } = useAuth();
 	const [email, setEmail] = useState('');
 	const [error, setError] = useState('');
+	const [apiKeyStatus, setApiKeyStatus] = useState<string>('Checking...');
+
+	useEffect(() => {
+		// Check if our Magic Link API key is properly loaded
+		const apiKey = process.env.NEXT_PUBLIC_MAGIC_API_KEY;
+		if (apiKey) {
+			// We don't want to show the full API key for security reasons
+			// Just show the first few characters to confirm it's loaded
+			setApiKeyStatus(
+				`Magic API Key loaded: ${apiKey.substring(0, 5)}...`
+			);
+		} else {
+			setApiKeyStatus(
+				'Magic API Key not found in environment variables!'
+			);
+		}
+	}, []);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -86,6 +103,19 @@ const LoginPage = () => {
 						</div>
 					</form>
 				</Card>
+
+				{/* API Key Status */}
+				<div className="mt-4 text-center">
+					<p
+						className={`text-sm ${
+							apiKeyStatus.includes('not found')
+								? 'text-red-500'
+								: 'text-green-500'
+						}`}
+					>
+						{apiKeyStatus}
+					</p>
+				</div>
 			</div>
 		</div>
 	);

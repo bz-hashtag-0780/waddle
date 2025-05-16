@@ -1,9 +1,9 @@
-// RewardToken.cdc
+// FIVEGCOIN.cdc 5G COIN
 //
 // This contract implements a fungible token that will be used
 // to reward hotspot operators for providing 5G network coverage.
 
-access(all) contract RewardToken {
+access(all) contract FIVEGCOIN {
 
     // Events
     access(all) event TokensInitialized(initialSupply: UFix64)
@@ -70,7 +70,7 @@ access(all) contract RewardToken {
             pre {
                 amount > 0.0: "Amount minted must be greater than zero"
             }
-            RewardToken.totalSupply = RewardToken.totalSupply + amount
+            FIVEGCOIN.totalSupply = FIVEGCOIN.totalSupply + amount
             emit TokensMinted(amount: amount, to: recipient.owner?.address)
             recipient.deposit(from: <-create Vault(balance: amount))
         }
@@ -81,7 +81,7 @@ access(all) contract RewardToken {
         // Burn tokens from a Vault
         access(all) fun burnTokens(from: @Vault) {
             let amount = from.balance
-            RewardToken.totalSupply = RewardToken.totalSupply - amount
+            FIVEGCOIN.totalSupply = FIVEGCOIN.totalSupply - amount
             emit TokensBurned(amount: amount, from: from.owner?.address)
             destroy from
         }
@@ -119,18 +119,6 @@ access(all) contract RewardToken {
         // Create an empty Vault for the deployer
         let vault <- self.createEmptyVault()
         self.account.storage.save(<-vault, to: self.VaultStoragePath)
-
-        // Create public capabilities for the vault
-        self.account.capabilities.publish(
-            at: self.VaultReceiverPath,
-            target: self.VaultStoragePath,
-            as: Type<&{Receiver}>()
-        )
-        self.account.capabilities.publish(
-            at: self.VaultBalancePath,
-            target: self.VaultStoragePath,
-            as: Type<&{Balance}>()
-        )
 
         emit ContractInitialized()
     }

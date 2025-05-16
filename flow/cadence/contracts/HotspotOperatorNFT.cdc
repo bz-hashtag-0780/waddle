@@ -1,10 +1,11 @@
 // HotspotOperatorNFT.cdc
 //
-// This contract implements the basic functionality for a Non-Fungible Token
-// that represents ownership rights for operating a 5G hotspot in our network.
-// It implements the standard Flow NFT interface.
+// This contract implements a non-fungible token (NFT) for representing Hotspot Operator NFTs.
+// It allows users to register hotspots and receive coverage rewards.
 
 import "NonFungibleToken"
+import "ViewResolver"
+import "MetadataViews"
 
 access(all) contract HotspotOperatorNFT {
 
@@ -17,7 +18,6 @@ access(all) contract HotspotOperatorNFT {
     // Named paths
     access(all) let CollectionStoragePath: StoragePath
     access(all) let CollectionPublicPath: PublicPath
-    access(all) let MinterStoragePath: StoragePath
 
     // Total supply of HotspotOperatorNFTs in existence
     access(all) var totalSupply: UInt64
@@ -37,43 +37,36 @@ access(all) contract HotspotOperatorNFT {
         }
     }
 
-    // Interface for NFT 
-    access(all) resource interface INFT {
-        access(all) let id: UInt64
-    }
-
     // The NFT resource that represents ownership rights to a hotspot
-    access(all) resource NFT: INFT {
+    access(all) resource NFT: NonFungibleToken.NFT {
         access(all) let id: UInt64
         access(all) let metadata: HotspotOperatorData
 
-        init(initID: UInt64, metadata: HotspotOperatorData) {
-            self.id = initID
+        init(metadata: HotspotOperatorData) {
+            self.id = self.uuid
             self.metadata = metadata
         }
-    }
 
-    // Interface for NFT Collection Provider
-    access(all) resource interface Provider {
-        access(all) fun withdraw(withdrawID: UInt64): @NFT
-    }
+        access(all) view fun getViews(): [Type] {
+            return [
+            ]
+        }
 
-    // Interface for NFT Collection Receiver
-    access(all) resource interface Receiver {
-        access(all) fun deposit(token: @NFT)
-    }
+        // resolves the view with the given type for the NFT
+        access(all) fun resolveView(_ view: Type): AnyStruct? {
+            return nil
+        }
 
-    // Interface for public collection methods
-    access(all) resource interface CollectionPublic {
-        access(all) fun getIDs(): [UInt64]
-        access(all) fun borrowNFT(id: UInt64): &NFT
+        access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
+            return <-HotspotOperatorNFT.createEmptyCollection(nftType: Type<@NFT>())
+        }
     }
 
     // Interface that users can cast their Collection as to allow others to deposit HotspotOperatorNFTs
     access(all) resource interface HotspotOperatorNFTCollectionPublic {
-        access(all) fun deposit(token: @NFT)
+        access(all) fun deposit(token: @{NonFungibleToken.NFT})
         access(all) fun getIDs(): [UInt64]
-        access(all) fun borrowNFT(id: UInt64): &NFT
+        access(all) view fun borrowNFT(_ id: UInt64): &{NonFungibleToken.NFT}?
         access(all) fun borrowHotspotOperator(id: UInt64): &NFT? {
             post {
                 (result == nil) || (result?.id == id): 
@@ -83,27 +76,42 @@ access(all) contract HotspotOperatorNFT {
     }
 
     // Collection resource that holds multiple HotspotOperator NFTs
-    access(all) resource Collection: Provider, Receiver, CollectionPublic, HotspotOperatorNFTCollectionPublic {
+    access(all) resource Collection: HotspotOperatorNFTCollectionPublic, NonFungibleToken.Collection {
         // Dictionary of NFT conforming tokens
         // NFT ID -> NFT Resource
-        access(all) var ownedNFTs: @{UInt64: NFT}
+        access(all) var ownedNFTs: @{UInt64: {NonFungibleToken.NFT}}
 
         init() {
             self.ownedNFTs <- {}
         }
 
-        // Withdraws an NFT from the collection
-        access(all) fun withdraw(withdrawID: UInt64): @NFT {
-            let token <- self.ownedNFTs.remove(key: withdrawID) 
-                ?? panic("Cannot withdraw: HotspotOperator with the specified ID does not exist")
-            
+        // Return a list of NFT types that this receiver accepts
+        access(all) view fun getSupportedNFTTypes(): {Type: Bool} {
+            let supportedTypes: {Type: Bool} = {}
+            supportedTypes[Type<@HotspotOperatorNFT.NFT>()] = true
+            return supportedTypes
+        }
+
+        // Return whether or not the given type is accepted by the collection
+        // A collection that can accept any type should just return true by default
+        access(all) view fun isSupportedNFTType(type: Type): Bool {
+            if type == Type<@HotspotOperatorNFT.NFT>() {
+                return true
+            }
+            return false
+        }
+
+        access(NonFungibleToken.Withdraw) fun withdraw(withdrawID: UInt64): @{NonFungibleToken.NFT} {
+            let token <- self.ownedNFTs.remove(key: withdrawID) ?? panic("missing NFT")
+
             emit Withdraw(id: token.id, from: self.owner?.address)
-            
+
             return <-token
         }
 
         // Deposits an NFT into the collection
-        access(all) fun deposit(token: @NFT) {
+        access(all) fun deposit(token: @{NonFungibleToken.NFT}) {
+            let token <- token as! @HotspotOperatorNFT.NFT
             let id: UInt64 = token.id
             
             // Add the new token to the dictionary
@@ -115,31 +123,36 @@ access(all) contract HotspotOperatorNFT {
             destroy oldToken
         }
 
-        // Returns an array of the IDs of NFTs in the collection
-        access(all) fun getIDs(): [UInt64] {
+        access(all) view fun getIDs(): [UInt64] {
             return self.ownedNFTs.keys
         }
 
-        // Returns a borrowed reference to an NFT in the collection
-        access(all) fun borrowNFT(id: UInt64): &NFT {
-            return (&self.ownedNFTs[id] as &NFT?)!
+        access(all) view fun getLength(): Int {
+            return self.ownedNFTs.keys.length
+        }
+
+        access(all) view fun borrowNFT(_ id: UInt64): &{NonFungibleToken.NFT}? {
+            return &self.ownedNFTs[id]
         }
 
         // Returns a borrowed reference to a HotspotOperator NFT in the collection
         access(all) fun borrowHotspotOperator(id: UInt64): &NFT? {
-            if self.ownedNFTs[id] != nil {
-                let ref = (&self.ownedNFTs[id] as auth &NFT?)!
-                return ref
+            return self.borrowNFT(id) as! &NFT?
+        }
+
+        access(all) view fun borrowViewResolver(id: UInt64): &{ViewResolver.Resolver}? {
+            if let nft = &self.ownedNFTs[id] as &{NonFungibleToken.NFT}? {
+                return nft as &{ViewResolver.Resolver}
             }
-            
             return nil
+        }
+
+        access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
+            return <-HotspotOperatorNFT.createEmptyCollection(nftType: Type<@NFT>())
         }
     }
 
-    // Resource that allows an admin to mint new HotspotOperator NFTs
-    access(all) resource NFTMinter {
-        // Mints a new NFT and deposits it into the recipient's collection
-        access(all) fun mintNFT(
+    access(all) fun mintNFT(
             recipient: &{HotspotOperatorNFTCollectionPublic},
             name: String,
             description: String,
@@ -154,7 +167,6 @@ access(all) contract HotspotOperatorNFT {
 
             // Create the NFT
             let newNFT <- create NFT(
-                initID: HotspotOperatorNFT.totalSupply,
                 metadata: metadata
             )
 
@@ -166,11 +178,9 @@ access(all) contract HotspotOperatorNFT {
 
             emit Minted(id: HotspotOperatorNFT.totalSupply - 1, recipient: recipient.owner?.address)
         }
-    }
 
-    // Creates an empty Collection and returns it
-    access(all) fun createEmptyCollection(): @Collection {
-        return <-create Collection()
+    access(all) fun createEmptyCollection(nftType: Type): @{NonFungibleToken.Collection} {
+        return <- create Collection()
     }
 
     init() {
@@ -178,13 +188,8 @@ access(all) contract HotspotOperatorNFT {
         self.totalSupply = 0
         
         // Set named paths
-        self.CollectionStoragePath = /storage/HotspotOperatorNFTCollection
-        self.CollectionPublicPath = /public/HotspotOperatorNFTCollection
-        self.MinterStoragePath = /storage/HotspotOperatorNFTMinter
-
-        // Create a Minter resource and save it in storage
-        let minter <- create NFTMinter()
-        self.account.save(<-minter, to: self.MinterStoragePath)
+        self.CollectionStoragePath = /storage/HotspotOperatorNFTCollection_1
+        self.CollectionPublicPath = /public/HotspotOperatorNFTCollection_1
 
         emit ContractInitialized()
     }

@@ -22,7 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 									href="/"
 									className="text-2xl font-bold text-blue-600"
 								>
-									Waddle 5G
+									Waddle $5G
 								</Link>
 							</div>
 							<nav className="ml-6 flex space-x-8">

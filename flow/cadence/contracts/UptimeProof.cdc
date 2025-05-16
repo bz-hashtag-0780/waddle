@@ -71,67 +71,44 @@ access(all) contract UptimeProof {
         }
     }
     
-    // Public interface for querying proofs
-    access(all) resource interface ProofsPublic {
-        access(all) fun getProofsForHotspot(hotspotID: UInt64): [Proof]
-        access(all) fun getTotalUptimeForHotspot(hotspotID: UInt64): UFix64
-        access(all) fun getAverageSignalStrengthForHotspot(hotspotID: UInt64): UFix64?
+    // Get all proofs for a specific hotspot
+    access(all) fun getProofsForHotspot(hotspotID: UInt64): [Proof] {
+        return UptimeProof.proofsByHotspot[hotspotID] ?? []
     }
     
-    // Public resource for accessing proof data
-    access(all) resource Proofs: ProofsPublic {
-        // Get all proofs for a specific hotspot
-        access(all) fun getProofsForHotspot(hotspotID: UInt64): [Proof] {
-            return UptimeProof.proofsByHotspot[hotspotID] ?? []
+    // Get total uptime for a specific hotspot
+    access(all) fun getTotalUptimeForHotspot(hotspotID: UInt64): UFix64 {
+        return UptimeProof.totalUptimeByHotspot[hotspotID] ?? 0.0
+    }
+    
+    // Calculate average signal strength for a hotspot
+    access(all) fun getAverageSignalStrengthForHotspot(hotspotID: UInt64): UFix64? {
+        let proofs = UptimeProof.proofsByHotspot[hotspotID] ?? []
+        
+        if proofs.length == 0 {
+            return nil
         }
         
-        // Get total uptime for a specific hotspot
-        access(all) fun getTotalUptimeForHotspot(hotspotID: UInt64): UFix64 {
-            return UptimeProof.totalUptimeByHotspot[hotspotID] ?? 0.0
+        var totalStrength: UFix64 = 0.0
+        for proof in proofs {
+            totalStrength = totalStrength + proof.signalStrength
         }
         
-        // Calculate average signal strength for a hotspot
-        access(all) fun getAverageSignalStrengthForHotspot(hotspotID: UInt64): UFix64? {
-            let proofs = UptimeProof.proofsByHotspot[hotspotID] ?? []
-            
-            if proofs.length == 0 {
-                return nil
-            }
-            
-            var totalStrength: UFix64 = 0.0
-            for proof in proofs {
-                totalStrength = totalStrength + proof.signalStrength
-            }
-            
-            return totalStrength / UFix64(proofs.length)
-        }
+        return totalStrength / UFix64(proofs.length)
     }
     
     // Paths for storing resources
     access(all) let AdminStoragePath: StoragePath
-    access(all) let ProofsPublicPath: PublicPath
     
     init() {
         self.proofsByHotspot = {}
         self.totalUptimeByHotspot = {}
         
         self.AdminStoragePath = /storage/UptimeProofAdmin
-        self.ProofsPublicPath = /public/UptimeProofs
         
         // Create the admin resource
         let admin <- create Admin()
         self.account.storage.save(<-admin, to: self.AdminStoragePath)
-        
-        // Create the public proofs resource
-        let proofs <- create Proofs()
-        self.account.storage.save(<-proofs, to: /storage/UptimeProofs)
-        
-        // Create a public capability for accessing proofs
-        self.account.capabilities.publish(
-            at: self.ProofsPublicPath,
-            target: /storage/UptimeProofs,
-            as: Type<&Proofs{ProofsPublic}>()
-        )
         
         emit ContractInitialized()
     }

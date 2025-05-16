@@ -7,7 +7,13 @@
 			}
 		},
 		"HotspotOperatorNFT": {
-			"source": "cadence/contracts/HotspotOperatorNFT.cdc",
+			"source": "flow/cadence/contracts/HotspotOperatorNFT.cdc",
+			"aliases": {
+				"testing": "0000000000000007"
+			}
+		},
+		"HotspotRegistry": {
+			"source": "flow/cadence/contracts/HotspotRegistry.cdc",
 			"aliases": {
 				"testing": "0000000000000007"
 			}
