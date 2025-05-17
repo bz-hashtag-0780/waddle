@@ -246,7 +246,7 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
 -   [COMPLETED] Fix Magic Link authentication errors ✅
 -   [COMPLETED] Implement dashboard with real FLOW balance display ✅
 -   [COMPLETED] Implement NFT minting interface ✅
--   [COMPLETED] Implement NFT collection viewer ✅
+-   [IN PROGRESS] Fix NFT collection viewer display issues
 -   [IN PROGRESS] Complete hotspot registration flow
 -   [IN PROGRESS] Finalize network visualization
 
@@ -262,50 +262,127 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
 
 ## High Priority Tasks (Next Steps)
 
-1. **Complete Hotspot Registration Flow**
+1. **Fix NFT Collection Display Issues**
 
-    - Integrate NFT ownership verification with registration
-    - Connect the registration form to actual contract transactions
-    - Add validation and error handling
-    - Implement success screens and follow-up actions
-    - Success criteria: Users can register hotspots with their NFTs and view them on dashboard
+    - **Description**: The NFT collection viewer has display issues and appears inconsistent with the rest of the frontend
+    - **Tasks**:
+        - [ ] Fix the commented out image and text sections in NFTCollectionViewer.tsx
+        - [ ] Update the getUserNFTs function in flow.ts to return proper NFT metadata
+        - [ ] Ensure consistent styling between NFT components and the rest of the app
+        - [ ] Test NFT display with various NFT types and metadata
+        - [ ] Add fallback UI elements for missing NFT data
+    - **Dependencies**: flow.ts service with working mintNFTComplete function
+    - **Success Criteria**:
+        - NFT collection displays properly with images and correct metadata
+        - UI styling is consistent with the rest of the application
+        - Empty states and loading states work correctly
+        - NFT detail view shows complete information
 
-2. **Finalize Network Visualization**
+2. **Fix NFT Data Structure and Integration**
 
-    - Complete the network map implementation
-    - Add real hotspot data from the blockchain
-    - Implement filtering and search functionality
-    - Add coverage visualization
-    - Success criteria: Users can view all network hotspots with status indicators
+    - **Description**: Ensure the NFT data returned from the blockchain is properly structured and displayed
+    - **Tasks**:
+        - [ ] Update getUserNFTs function to properly query Flow contracts
+        - [ ] Ensure NFT metadata is retrieved in the correct format
+        - [ ] Implement proper type definitions for NFT data
+        - [ ] Add error handling for malformed NFT data
+        - [ ] Create a consistent format for displaying NFT traits
+    - **Dependencies**: Deployed NFT contract
+    - **Success Criteria**:
+        - NFT data from blockchain is correctly parsed and displayed
+        - All NFT metadata (including traits) is visible in the UI
+        - Types are consistent across the application
+        - Error handling gracefully manages missing data
 
-3. **Complete Frontend-Contract Integration**
+3. **Complete Hotspot Registration Flow**
 
-    - Finish implementing real contract calls for remaining functionality
-    - Implement uptime proof submission
-    - Connect rewards display to actual token balances
-    - Success criteria: All frontend features work with real blockchain data
+    - **Tasks remaining from previous list**
+    - **Additional focus**:
+        - [ ] Ensure consistency with rest of app styling
+        - [ ] Verify NFT ownership requirement is enforced
 
-4. **Create Demo Mode for Judges**
+4. **Finalize Network Visualization**
 
-    - Build a UI component for triggering demo actions
-    - Add simulation controls for quick testing
-    - Implement visualizations to demonstrate the system working
-    - Success criteria: Judges can easily test the complete flow in a predictable way
+    - **Tasks remaining from previous list**
+    - **Additional focus**:
+        - [ ] Ensure consistency with rest of app styling
+        - [ ] Optimize for performance with large number of hotspots
 
-5. **Deploy Frontend to Vercel**
+## Detailed NFT Integration Plan
 
-    - Set up a Vercel project for the frontend
-    - Configure environment variables for production
-    - Deploy the application
-    - Success criteria: Application is accessible online via a public URL
+To fix the NFT collection display issues and ensure consistency across the frontend:
 
-6. **Create Documentation**
+### 1. Update NFTCollectionViewer Component
 
-    - Write a detailed README with project overview
-    - Add instructions for local development
-    - Document the smart contract architecture
-    - Create a script for the demo presentation
-    - Success criteria: Anyone can understand the project and how to run it
+-   **Fix Display Issues**
+
+    -   Uncomment and fix the image display code
+    -   Uncomment and fix the metadata display sections
+    -   Ensure proper handling of missing thumbnails or metadata
+    -   Add appropriate loading states and error handling
+    -   Implement responsive design consistent with other components
+
+-   **Improve NFT Detail View**
+    -   Enhance the modal display for better user experience
+    -   Add more structured display of NFT traits
+    -   Include hotspot-specific data if the NFT represents a hotspot
+    -   Add action buttons relevant to NFT functionality (e.g., register hotspot)
+
+### 2. Update Flow Service for NFT Data
+
+-   **Enhance getUserNFTs Function**
+
+    -   Replace mock data with actual blockchain queries
+    -   Implement proper error handling for failed queries
+    -   Add caching for better performance
+    -   Ensure consistent data structure is returned
+
+-   **Improve NFT Metadata Handling**
+    -   Create proper TypeScript interfaces for NFT metadata
+    -   Handle different NFT standards and formats
+    -   Implement fallbacks for missing metadata fields
+    -   Add functions to format and standardize metadata from different sources
+
+### 3. Style Consistency Updates
+
+-   **Create Shared Styling Components**
+
+    -   Define reusable UI components for NFT displays
+    -   Ensure consistent card, button, and layout styling
+    -   Match loading and error states with rest of application
+    -   Use consistent color schemes and typography
+
+-   **Responsive Design Improvements**
+    -   Optimize NFT grid for different screen sizes
+    -   Ensure modal displays properly on mobile devices
+    -   Implement proper image sizing and lazy loading
+    -   Test across multiple viewport sizes
+
+### 4. Testing and Validation
+
+-   **Test with Different NFT Data**
+
+    -   Create test cases with various NFT metadata structures
+    -   Test with missing or malformed metadata
+    -   Verify display with different image types and sizes
+    -   Test performance with large collections
+
+-   **User Flow Testing**
+    -   Test complete flows from minting to viewing NFTs
+    -   Verify transitions and state updates work correctly
+    -   Test error handling and recovery paths
+    -   Validate across different browsers and devices
+
+## Success Criteria for NFT Implementation
+
+1. NFT collection correctly displays all user-owned NFTs with proper images and metadata
+2. NFT detail view shows complete information including all traits and properties
+3. Styling is consistent with the rest of the application's design language
+4. Performance remains good even with larger NFT collections
+5. Empty states, loading states, and error handling work correctly
+6. All NFT-related functionality (minting, viewing) integrates properly with the Flow blockchain
+
+These updates should address the NFT display issues and ensure consistency across the frontend, making the NFT page match the design and functionality of the rest of the application.
 
 ## Potential Blind Spots & Mitigation
 
