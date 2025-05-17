@@ -157,10 +157,51 @@ Based on dependencies and core functionality:
     - Ensure NFT collection display adapts to different viewports
 
 3. **Functionality Verification in New Layout**
+
     - Test NFT minting process in the updated layout
     - Verify NFT collection display and interactions
     - Confirm refresh functionality works as expected
     - Ensure all UI interactions function properly
+
+4. **Layout Consistency Issues**
+
+    - Applied the Layout component to the NFTs page ✅
+    - Added header and footer components to ensure consistent navigation ✅
+    - Updated styling to match the rest of the application ✅
+    - Ensured all functionality continues to work with the updated layout ✅
+
+### Phase 5: Account Linking Implementation
+
+1. **Hybrid Custody Contract Integration**
+
+    - Import and configure the HybridCustody contract interfaces
+    - Set up CapabilityFactory and CapabilityFilter for secure capability management
+    - Create necessary scripts and transactions for capability creation and claiming
+
+2. **Account Linking Page Development**
+
+    - Create an account-linking page and component structure
+    - Implement a multi-step UI workflow for the linking process
+    - Design clear visual indicators for the parent-child account relationship
+    - Include proper progress indicators and feedback
+
+3. **Magic.link Child Account Integration**
+
+    - Integrate with existing Magic.link authentication
+    - Configure child account setup for linking readiness
+    - Implement appropriate transaction signing through Magic.link SDK
+
+4. **Flow Wallet Integration**
+
+    - Add Flow Wallet connection capabilities
+    - Implement wallet selection UI similar to Tibles/Dapper examples
+    - Configure transaction signing through Flow Wallet (extension/mobile/web)
+
+5. **Testing and Refinement**
+    - Test the complete account linking flow end-to-end
+    - Verify capability creation and claiming processes
+    - Test with various wallet types (extension, mobile, web)
+    - Optimize the UI/UX based on testing results
 
 ## Current Status / Progress Tracking
 
@@ -233,18 +274,20 @@ We've also successfully deployed all smart contracts to the Flow testnet:
     - Updated the NFTs page to use the refreshCollection method ✅
     - Implemented auto-refresh after successful NFT minting ✅
 
-8. **Layout Consistency Issues (Planned)**:
+8. **Layout Consistency Issues**:
 
-    - NFTs page is missing header and footer components
-    - Layout structure differs from dashboard and other pages
-    - Missing consistent styling and navigation elements
-    - Need to analyze and apply consistent layout architecture
+    - Applied the Layout component to the NFTs page ✅
+    - Added header and footer components to ensure consistent navigation ✅
+    - Updated styling to match the rest of the application ✅
+    - Ensured all functionality continues to work with the updated layout ✅
 
-9. **NFT Collection Refresh Enhancement (Planned)**:
-    - Need to implement auto-refresh after successful NFT reveal transaction
-    - Need to implement the Refresh Collection button functionality
-    - Ensure proper loading state management during refresh operations
-    - Add appropriate user feedback during refresh operations
+9. **Account Linking Feature (Planned)**:
+
+    - Need to implement Hybrid Custody contract integration
+    - Need to develop an account linking page with multi-step UI
+    - Need to integrate with Magic.link for child account setup
+    - Need to integrate with Flow Wallet for parent account connection
+    - Need to implement capability creation and claiming process
 
 The Magic Link implementation is now fully operational and users can successfully log in using their email. All smart contracts have been deployed to the Flow testnet.
 
@@ -322,8 +365,11 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
 -   [COMPLETED] Fix NFT collection viewer display issues ✅
 -   [COMPLETED] Implement auto-refresh after NFT reveal transaction ✅
 -   [COMPLETED] Implement Refresh Collection button functionality ✅
--   [PLANNED] Fix layout consistency for NFTs page
--   [PLANNED] Apply shared header and footer to NFTs page
+-   [COMPLETED] Fix layout consistency for NFTs page ✅
+-   [COMPLETED] Apply shared header and footer to NFTs page ✅
+-   [PLANNED] Implement account linking feature
+-   [PLANNED] Create multi-step UI flow for account linking
+-   [PLANNED] Integrate with Flow Wallet for account linking
 -   [IN PROGRESS] Complete hotspot registration flow
 -   [IN PROGRESS] Finalize network visualization
 
@@ -402,6 +448,25 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
         - Styling is consistent with the rest of the application
         - Responsive behavior matches other pages
         - All NFT functionality continues to work in the updated layout
+
+6. **Implement Account Linking Feature**
+
+    - **Description**: Enable users to link their Magic.link-created child accounts with their Flow Wallet parent accounts using Flow's Hybrid Custody model
+    - **Tasks**:
+        - [ ] Set up Hybrid Custody contract integration
+        - [ ] Create an account-linking page with multi-step UI
+        - [ ] Implement Magic.link child account configuration
+        - [ ] Add Flow Wallet connection capabilities
+        - [ ] Implement capability creation and claiming transactions
+        - [ ] Design clear visual indicators for account relationships
+        - [ ] Add proper error handling and user feedback
+    - **Dependencies**: Existing Magic.link authentication, Flow SDK
+    - **Success Criteria**:
+        - Users can complete the full linking flow from Magic.link child account to Flow Wallet parent account
+        - UI provides clear guidance and feedback throughout the process
+        - Transactions are properly created, signed, and executed
+        - Linked status is verified and displayed to the user
+        - Performance is acceptable with reasonable transaction times
 
 ## Detailed NFT Integration Plan
 
