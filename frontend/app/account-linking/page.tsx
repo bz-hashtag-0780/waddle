@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
+import * as fcl from '@onflow/fcl';
 
 // Define step types
 type Step =
@@ -67,16 +68,16 @@ export default function AccountLinkingPage() {
 	const handleConnectWallet = async () => {
 		setLinkingStatus('loading');
 		try {
-			// TODO: Implement FCL wallet connection
-			// This will be replaced with actual FCL connection code
-			console.log('Connecting to Flow Wallet...');
+			// Connect to Flow wallet using FCL
+			const user = await fcl.authenticate();
 
-			// Simulate successful connection
-			setTimeout(() => {
-				setFlowAddress('0x1234567890abcdef'); // Placeholder address
+			if (user.addr) {
+				setFlowAddress(user.addr);
 				setLinkingStatus('success');
 				nextStep();
-			}, 2000);
+			} else {
+				throw new Error('Failed to get Flow wallet address');
+			}
 		} catch (error) {
 			console.error('Error connecting wallet:', error);
 			setErrorMessage(
@@ -90,15 +91,98 @@ export default function AccountLinkingPage() {
 	const handleCreateCapability = async () => {
 		setLinkingStatus('loading');
 		try {
-			// TODO: Implement capability creation transaction
-			console.log('Creating capability...');
+			// First ensure the child account is set up
+			const setupChildTxId = await fcl.mutate({
+				cadence: `
+					import "HybridCustody"
+					import "MetadataViews"
+					import "CapabilityFactory"
+					import "CapabilityFilter"
+					
+					transaction {
+						prepare(signer: auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account) {
+							// Check if the OwnedAccount already exists
+							if signer.storage.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) == nil {
+								// Create the AuthAccount capability for the owned account
+								let acctCap = signer.capabilities.account.issue<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>()
+								
+								// Create a new OwnedAccount resource with the account capability
+								let ownedAccount <- HybridCustody.createOwnedAccount(acct: acctCap)
+								
+								// Save the OwnedAccount to storage
+								signer.storage.save(<-ownedAccount, to: HybridCustody.OwnedAccountStoragePath)
+								
+								// Create a public capability for the OwnedAccount
+								signer.capabilities.publish(
+									signer.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic}>(
+										HybridCustody.OwnedAccountStoragePath
+									),
+									at: HybridCustody.OwnedAccountPublicPath
+								)
+							}
+						}
+					}
+				`,
+				limit: 9999,
+			});
 
-			// Simulate successful capability creation
-			setTimeout(() => {
-				setTxId('0x9876543210fedcba'); // Placeholder transaction ID
-				setLinkingStatus('success');
-				nextStep();
-			}, 2000);
+			await fcl.tx(setupChildTxId).onceSealed();
+
+			// Then publish to parent
+			const createCapabilityTxId = await fcl.mutate({
+				cadence: `
+					import "HybridCustody"
+					import "CapabilityFactory"
+					import "CapabilityFilter"
+					
+					transaction(parentAddress: Address) {
+						prepare(signer: auth(Storage, Capabilities) &Account) {
+							// Get the OwnedAccount resource
+							let ownedAccount = signer.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(
+								from: HybridCustody.OwnedAccountStoragePath
+							) ?? panic("OwnedAccount not found, please setup your child account first")
+							
+							// Check if already published to this parent
+							if ownedAccount.isChildOf(parentAddress) {
+								panic("Already published to this parent address")
+							}
+							
+							// Create a simple capability factory
+							let factoryManager <- CapabilityFactory.createManager()
+							signer.storage.save(<-factoryManager, to: /storage/HCFactoryManager)
+							
+							let capabilityFactoryCap = signer.capabilities.storage.issue<&CapabilityFactory.Manager>(
+								/storage/HCFactoryManager
+							)
+							
+							// Create a simple capability filter that allows all capabilities
+							let filterList: [Type] = []
+							let filter <- CapabilityFilter.AllowAllFilter()
+							signer.storage.save(<-filter, to: /storage/HCFilterAllowAll)
+							
+							let capabilityFilterCap = signer.capabilities.storage.issue<&{CapabilityFilter.Filter}>(
+								/storage/HCFilterAllowAll
+							)
+							
+							// Publish the child account to the parent
+							ownedAccount.publishToParent(
+								parentAddress: parentAddress,
+								factory: capabilityFactoryCap,
+								filter: capabilityFilterCap
+							)
+						}
+					}
+				`,
+				args: (arg, t) => [arg(flowAddress, t.Address)],
+				limit: 9999,
+			});
+
+			// Wait for transaction to be sealed
+			await fcl.tx(createCapabilityTxId).onceSealed();
+
+			setTxId(createCapabilityTxId);
+			setLinkingStatus('success');
+			nextStep();
 		} catch (error) {
 			console.error('Error creating capability:', error);
 			setErrorMessage('Failed to create capability. Please try again.');
@@ -110,14 +194,78 @@ export default function AccountLinkingPage() {
 	const handleClaimCapability = async () => {
 		setLinkingStatus('loading');
 		try {
-			// TODO: Implement capability claiming transaction
-			console.log('Claiming capability...');
+			// First ensure the parent account is set up
+			const setupParentTxId = await fcl.mutate({
+				cadence: `
+					import "HybridCustody"
+					import "CapabilityFilter"
+					
+					transaction {
+						prepare(signer: auth(Storage, Capabilities) &Account) {
+							// Check if the Manager already exists
+							if signer.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
+								// Create a new Manager resource without a filter
+								let manager <- HybridCustody.createManager(filter: nil)
+								
+								// Save the Manager to storage
+								signer.storage.save(<-manager, to: HybridCustody.ManagerStoragePath)
+								
+								// Create a public capability for the Manager
+								signer.capabilities.publish(
+									signer.capabilities.storage.issue<&{HybridCustody.ManagerPublic}>(
+										HybridCustody.ManagerStoragePath
+									),
+									at: HybridCustody.ManagerPublicPath
+								)
+							}
+						}
+					}
+				`,
+				limit: 9999,
+			});
 
-			// Simulate successful capability claiming
-			setTimeout(() => {
-				setLinkingStatus('success');
-				nextStep();
-			}, 2000);
+			await fcl.tx(setupParentTxId).onceSealed();
+
+			// Then claim the capability
+			if (!user?.address) {
+				throw new Error('User address not found');
+			}
+			const childAddress = user.address;
+			const claimCapabilityTxId = await fcl.mutate({
+				cadence: `
+					import "HybridCustody"
+					import "ViewResolver"
+					
+					transaction(childAddress: Address) {
+						prepare(signer: auth(Storage, Capabilities, Inbox) &Account) {
+							// Get the Manager resource
+							let manager = signer.storage.borrow<auth(HybridCustody.Manage) &HybridCustody.Manager>(
+								from: HybridCustody.ManagerStoragePath
+							) ?? panic("Manager not found, please setup your parent account first")
+							
+							// Get the identifier for the child account
+							let identifier = HybridCustody.getChildAccountIdentifier(signer.address)
+							
+							// Check if there's a message in the inbox with this capability
+							let capability = signer.inbox.claim<auth(HybridCustody.Child) &{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, ViewResolver.Resolver}>(
+								identifier,
+								provider: childAddress
+							) ?? panic("No capability found in inbox from provider: ".concat(childAddress.toString()))
+							
+							// Add the account to the manager
+							manager.addAccount(cap: capability)
+						}
+					}
+				`,
+				args: (arg, t) => [arg(childAddress, t.Address)],
+				limit: 9999,
+			});
+
+			// Wait for transaction to be sealed
+			await fcl.tx(claimCapabilityTxId).onceSealed();
+
+			setLinkingStatus('success');
+			nextStep();
 		} catch (error) {
 			console.error('Error claiming capability:', error);
 			setErrorMessage('Failed to claim capability. Please try again.');
