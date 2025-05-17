@@ -19,7 +19,7 @@ transaction(parentAddress: Address) {
         }
         
         // Create a simple capability factory
-        let factoryManager <- CapabilityFactory.create()
+        let factoryManager <- CapabilityFactory.createManager()
         signer.storage.save(<-factoryManager, to: /storage/HCFactoryManager)
         
         let capabilityFactoryCap = signer.capabilities.storage.issue<&CapabilityFactory.Manager>(
@@ -27,7 +27,7 @@ transaction(parentAddress: Address) {
         )
         
         // Create a simple capability filter that allows all capabilities
-        let filter <- CapabilityFilter.AllowlistFilter([Type<&AnyResource>()])
+        let filter <- CapabilityFilter.create()
         signer.storage.save(<-filter, to: /storage/HCFilterAllowAll)
         
         let capabilityFilterCap = signer.capabilities.storage.issue<&{CapabilityFilter.Filter}>(

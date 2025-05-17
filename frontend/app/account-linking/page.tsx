@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import * as fcl from '@onflow/fcl';
+import FlowWalletConnect from '@/components/FlowWalletConnect';
 
 // Define step types
 type Step =
@@ -64,29 +65,6 @@ export default function AccountLinkingPage() {
 		}
 	};
 
-	// Step 2: Connect Flow Wallet
-	const handleConnectWallet = async () => {
-		setLinkingStatus('loading');
-		try {
-			// Connect to Flow wallet using FCL
-			const user = await fcl.authenticate();
-
-			if (user.addr) {
-				setFlowAddress(user.addr);
-				setLinkingStatus('success');
-				nextStep();
-			} else {
-				throw new Error('Failed to get Flow wallet address');
-			}
-		} catch (error) {
-			console.error('Error connecting wallet:', error);
-			setErrorMessage(
-				'Failed to connect to Flow Wallet. Please try again.'
-			);
-			setLinkingStatus('error');
-		}
-	};
-
 	// Step 3: Create capability from Magic account to Flow Wallet
 	const handleCreateCapability = async () => {
 		setLinkingStatus('loading');
@@ -94,10 +72,8 @@ export default function AccountLinkingPage() {
 			// First ensure the child account is set up
 			const setupChildTxId = await fcl.mutate({
 				cadence: `
-					import "HybridCustody"
-					import "MetadataViews"
-					import "CapabilityFactory"
-					import "CapabilityFilter"
+					import HybridCustody from 0xHybridCustody
+					import MetadataViews from 0xMetadataViews
 					
 					transaction {
 						prepare(signer: auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account) {
@@ -131,9 +107,10 @@ export default function AccountLinkingPage() {
 			// Then publish to parent
 			const createCapabilityTxId = await fcl.mutate({
 				cadence: `
-					import "HybridCustody"
-					import "CapabilityFactory"
-					import "CapabilityFilter"
+					import HybridCustody from 0xHybridCustody
+					import CapabilityFactory from 0xCapabilityFactory
+					import CapabilityFilter from 0xCapabilityFilter
+					import CapabilityDelegator from 0xCapabilityDelegator
 					
 					transaction(parentAddress: Address) {
 						prepare(signer: auth(Storage, Capabilities) &Account) {
@@ -147,28 +124,32 @@ export default function AccountLinkingPage() {
 								panic("Already published to this parent address")
 							}
 							
-							// Create a simple capability factory
-							let factoryManager <- CapabilityFactory.createManager()
-							signer.storage.save(<-factoryManager, to: /storage/HCFactoryManager)
+							// Get the needed manager, filter, and factory capabilities from the HybridCustody contract
+							// These values would normally need to be fetched from deployed contract addresses
 							
-							let capabilityFactoryCap = signer.capabilities.storage.issue<&CapabilityFactory.Manager>(
-								/storage/HCFactoryManager
+							// For the purpose of this demo, we'll use simplified initialization
+							// In a production environment, you would need proper capability setup
+							
+							// Create factory & filter capabilities - method will depend on actual contract implementation
+							let factoryRef <- CapabilityFactory.createManager()
+							signer.storage.save(<-factoryRef, to: /storage/hcFactoryManager)
+							
+							let factoryCap = signer.capabilities.storage.issue<&CapabilityFactory.Manager>(
+								/storage/hcFactoryManager
 							)
 							
-							// Create a simple capability filter that allows all capabilities
-							let filterList: [Type] = []
-							let filter <- CapabilityFilter.AllowAllFilter()
-							signer.storage.save(<-filter, to: /storage/HCFilterAllowAll)
+							let filterRef <- CapabilityFilter.AllowAllFilter()
+							signer.storage.save(<-filterRef, to: /storage/hcFilterAllowAll)
 							
-							let capabilityFilterCap = signer.capabilities.storage.issue<&{CapabilityFilter.Filter}>(
-								/storage/HCFilterAllowAll
+							let filterCap = signer.capabilities.storage.issue<&{CapabilityFilter.Filter}>(
+								/storage/hcFilterAllowAll
 							)
 							
 							// Publish the child account to the parent
 							ownedAccount.publishToParent(
 								parentAddress: parentAddress,
-								factory: capabilityFactoryCap,
-								filter: capabilityFilterCap
+								factory: factoryCap,
+								filter: filterCap
 							)
 						}
 					}
@@ -177,7 +158,6 @@ export default function AccountLinkingPage() {
 				limit: 9999,
 			});
 
-			// Wait for transaction to be sealed
 			await fcl.tx(createCapabilityTxId).onceSealed();
 
 			setTxId(createCapabilityTxId);
@@ -197,8 +177,7 @@ export default function AccountLinkingPage() {
 			// First ensure the parent account is set up
 			const setupParentTxId = await fcl.mutate({
 				cadence: `
-					import "HybridCustody"
-					import "CapabilityFilter"
+					import HybridCustody from 0xHybridCustody
 					
 					transaction {
 						prepare(signer: auth(Storage, Capabilities) &Account) {
@@ -233,8 +212,8 @@ export default function AccountLinkingPage() {
 			const childAddress = user.address;
 			const claimCapabilityTxId = await fcl.mutate({
 				cadence: `
-					import "HybridCustody"
-					import "ViewResolver"
+					import HybridCustody from 0xHybridCustody
+					import ViewResolver from 0xViewResolver
 					
 					transaction(childAddress: Address) {
 						prepare(signer: auth(Storage, Capabilities, Inbox) &Account) {
@@ -261,7 +240,6 @@ export default function AccountLinkingPage() {
 				limit: 9999,
 			});
 
-			// Wait for transaction to be sealed
 			await fcl.tx(claimCapabilityTxId).onceSealed();
 
 			setLinkingStatus('success');
@@ -351,15 +329,26 @@ export default function AccountLinkingPage() {
 								</Button>
 							</div>
 						) : (
-							<Button
-								onClick={handleConnectWallet}
-								disabled={linkingStatus === 'loading'}
-								isLoading={linkingStatus === 'loading'}
-							>
-								{linkingStatus === 'loading'
-									? 'Connecting...'
-									: 'Connect Flow Wallet'}
-							</Button>
+							<FlowWalletConnect
+								onConnect={(address) => {
+									setFlowAddress(address);
+									setLinkingStatus('success');
+									nextStep();
+								}}
+								onError={(error) => {
+									console.error(
+										'Error connecting wallet:',
+										error
+									);
+									setErrorMessage(
+										error.message ||
+											'Failed to connect to Flow Wallet. Please try again.'
+									);
+									setLinkingStatus('error');
+								}}
+								buttonText="Connect Flow Wallet"
+								showAddress={false}
+							/>
 						)}
 						{linkingStatus === 'error' && (
 							<div className="mt-4 text-red-500">
