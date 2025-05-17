@@ -38,6 +38,26 @@ export default function AccountLinkingPage() {
 		}
 	}, [authLoading, isAuthenticated, router]);
 
+	// Add this useEffect right after the existing useEffect in the component
+	useEffect(() => {
+		// Ensure FCL is configured properly
+		console.log('Configuring FCL');
+		console.log('Current FCL config:', fcl.config());
+
+		// Log the contract addresses used by checking it in the console
+		console.log('FCL contract check - please verify in browser console');
+
+		// Simplify the FCL subscription to avoid type issues
+		const unsub = fcl.currentUser().subscribe((user) => {
+			console.log('FCL current user updated:', user);
+		});
+
+		// Cleanup subscription on unmount
+		return () => {
+			unsub();
+		};
+	}, []);
+
 	// Progress to next step
 	const nextStep = () => {
 		// Reset linking status when moving to a new step
@@ -543,7 +563,6 @@ export default function AccountLinkingPage() {
 								onConnect={(address) => {
 									setFlowAddress(address);
 									setLinkingStatus('success');
-									nextStep();
 								}}
 								onError={(error) => {
 									console.error(
@@ -983,6 +1002,48 @@ export default function AccountLinkingPage() {
 		);
 	};
 
+	// Add a debugging component to show authentication status
+	const DebugInfo = () => {
+		// Only show in development
+		if (process.env.NODE_ENV !== 'development') return null;
+
+		return (
+			<div className="mb-4 p-3 bg-gray-100 rounded-md text-xs">
+				<h4 className="font-bold">Debug Info</h4>
+				<div>Magic initialized: {magic ? 'Yes' : 'No'}</div>
+				<div>Magic user: {user?.address || 'Not logged in'}</div>
+				<div>Flow Wallet: {flowAddress || 'Not connected'}</div>
+				<div>Current step: {currentStep}</div>
+				<div>Linking status: {linkingStatus}</div>
+				<button
+					onClick={async () => {
+						console.log('Magic info:', magic);
+						console.log(
+							'FCL user:',
+							await fcl.currentUser().snapshot()
+						);
+						if (magic) {
+							try {
+								console.log(
+									'Magic user info:',
+									await magic.user.getInfo()
+								);
+							} catch (e) {
+								console.error(
+									'Error getting Magic user info:',
+									e
+								);
+							}
+						}
+					}}
+					className="mt-1 px-2 py-1 bg-blue-500 text-white rounded text-xs"
+				>
+					Log Auth Details
+				</button>
+			</div>
+		);
+	};
+
 	// If still loading auth state, show loading indicator
 	if (authLoading) {
 		return (
@@ -1002,6 +1063,7 @@ export default function AccountLinkingPage() {
 	return (
 		<Layout>
 			<div className="max-w-4xl mx-auto">
+				<DebugInfo />
 				<h1 className="text-2xl font-bold text-gray-900 mb-2">
 					Account Linking
 				</h1>
