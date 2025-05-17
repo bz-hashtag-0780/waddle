@@ -140,6 +140,28 @@ Based on dependencies and core functionality:
     - Verify that both mechanisms correctly update the NFT collection
     - Optimize refresh logic to avoid redundant operations
 
+### Phase 4: UI Consistency and Layout Enhancement
+
+1. **Layout Consistency for NFTs Page**
+
+    - Analyze the Dashboard page layout structure
+    - Identify shared layout components (header, footer, navigation)
+    - Determine how layouts are applied in the Next.js application
+    - Apply consistent layout structure to the NFTs page
+
+2. **Responsive Design Verification**
+
+    - Test the updated NFTs page on various screen sizes
+    - Verify responsive behavior consistency with other pages
+    - Fix any responsive design issues
+    - Ensure NFT collection display adapts to different viewports
+
+3. **Functionality Verification in New Layout**
+    - Test NFT minting process in the updated layout
+    - Verify NFT collection display and interactions
+    - Confirm refresh functionality works as expected
+    - Ensure all UI interactions function properly
+
 ## Current Status / Progress Tracking
 
 We've successfully fixed the Magic Link authentication implementation:
@@ -203,7 +225,22 @@ We've also successfully deployed all smart contracts to the Flow testnet:
     - Added detailed logging to better understand the NFT data flow ✅
     - Successfully displaying NFTs with various ID formats in the collection viewer ✅
 
-7. **NFT Collection Refresh Enhancement (Planned)**:
+7. **NFT Collection Refresh Enhancement**:
+
+    - Added a refresh method to the NFTCollectionViewer component ✅
+    - Exposed this method via a ref to be called from parent components ✅
+    - Enhanced the getUserNFTs function with a skipCache parameter ✅
+    - Updated the NFTs page to use the refreshCollection method ✅
+    - Implemented auto-refresh after successful NFT minting ✅
+
+8. **Layout Consistency Issues (Planned)**:
+
+    - NFTs page is missing header and footer components
+    - Layout structure differs from dashboard and other pages
+    - Missing consistent styling and navigation elements
+    - Need to analyze and apply consistent layout architecture
+
+9. **NFT Collection Refresh Enhancement (Planned)**:
     - Need to implement auto-refresh after successful NFT reveal transaction
     - Need to implement the Refresh Collection button functionality
     - Ensure proper loading state management during refresh operations
@@ -283,8 +320,10 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
 -   [COMPLETED] Implement dashboard with real FLOW balance display ✅
 -   [COMPLETED] Implement NFT minting interface ✅
 -   [COMPLETED] Fix NFT collection viewer display issues ✅
--   [PLANNED] Implement auto-refresh after NFT reveal transaction
--   [PLANNED] Implement Refresh Collection button functionality
+-   [COMPLETED] Implement auto-refresh after NFT reveal transaction ✅
+-   [COMPLETED] Implement Refresh Collection button functionality ✅
+-   [PLANNED] Fix layout consistency for NFTs page
+-   [PLANNED] Apply shared header and footer to NFTs page
 -   [IN PROGRESS] Complete hotspot registration flow
 -   [IN PROGRESS] Finalize network visualization
 
@@ -345,6 +384,24 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
     - **Additional focus**:
         - [ ] Ensure consistency with rest of app styling
         - [ ] Optimize for performance with large number of hotspots
+
+5. **Fix Layout Consistency for NFTs Page**
+
+    - **Description**: The NFTs page currently lacks the consistent layout elements (header, footer) present on other pages like the dashboard
+    - **Tasks**:
+        - [ ] Analyze the layout structure of the dashboard page
+        - [ ] Identify the shared layout components used across the application
+        - [ ] Determine how Next.js layouts are applied in the project
+        - [ ] Apply consistent layout structure to the NFTs page
+        - [ ] Ensure header and footer components are included
+        - [ ] Verify styling consistency with the rest of the application
+    - **Dependencies**: Existing layout components in the project
+    - **Success Criteria**:
+        - NFTs page has the same layout structure as the dashboard page
+        - Header and footer elements are present and functioning properly
+        - Styling is consistent with the rest of the application
+        - Responsive behavior matches other pages
+        - All NFT functionality continues to work in the updated layout
 
 ## Detailed NFT Integration Plan
 
