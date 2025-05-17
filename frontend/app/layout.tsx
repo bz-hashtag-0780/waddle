@@ -2,6 +2,7 @@
 
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '../contexts/AuthContext';
+import { MagicProvider } from '../contexts/MagicContext';
 import './globals.css';
 import '../services/fcl-config';
 
@@ -14,8 +15,10 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en">
-			<body className={inter.className}>
-				<AuthProvider>{children}</AuthProvider>
+			<body className={inter.className} suppressHydrationWarning={true}>
+				<MagicProvider>
+					<AuthProvider>{children}</AuthProvider>
+				</MagicProvider>
 			</body>
 		</html>
 	);

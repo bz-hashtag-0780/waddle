@@ -1,14 +1,162 @@
 import * as fcl from '@onflow/fcl';
-// Note: t is used in the arg callbacks for transaction arguments
-import * as t from '@onflow/types';
 import { Hotspot, UptimeStats } from '../types/flow';
+import { Magic as MagicBase } from 'magic-sdk';
+import { FlowExtension } from '@magic-ext/flow';
+
+// Define Magic type correctly
+export type Magic = MagicBase<[FlowExtension]>;
 
 // Contract addresses (updated with testnet deployed contract addresses)
 const CONTRACT_ADDRESSES = {
-	HotspotOperatorNFT: '0x010f2d483a538e7e',
-	HotspotRegistry: '0x010f2d483a538e7e',
-	UptimeProof: '0x010f2d483a538e7e',
-	RewardToken: '0x010f2d483a538e7e',
+	HotspotOperatorNFT: '0xcc6a3536f37381a2',
+	HotspotRegistry: '0xcc6a3536f37381a2',
+	UptimeProof: '0xcc6a3536f37381a2',
+	FIVEGCOIN: '0xcc6a3536f37381a2',
+	RandomPicker: '0xcc6a3536f37381a2',
+};
+
+// Mint NFT Commit Transaction
+export const mintNFTCommit = async (magic: Magic): Promise<string> => {
+	try {
+		console.log('Executing NFT mint commit transaction');
+
+		const transactionId = await fcl.mutate({
+			cadence: `
+			// mintNFTcommit.cdc
+//
+// This transaction commits to minting a new HotspotOperatorNFT
+// using the RandomPicker to ensure fair and verifiable randomness.
+// 
+// Note: You must run the setupHotspotOperatorNFTCollection transaction first
+// to set up your account to receive NFTs.
+
+import HotspotOperatorNFT from 0xcc6a3536f37381a2
+import RandomPicker from 0xcc6a3536f37381a2
+
+transaction {
+    prepare(acct: auth(Storage) &Account) {
+        // Check if receipt already exists and remove it to avoid conflicts
+        if acct.storage.borrow<&RandomPicker.Receipt>(from: RandomPicker.ReceiptStoragePath) != nil {
+            // In Cadence 1.0, we need to load and destroy the existing receipt
+            let oldReceipt <- acct.storage.load<@RandomPicker.Receipt>(from: RandomPicker.ReceiptStoragePath)
+            destroy oldReceipt
+        }
+        
+        // Create a new RandomPicker Receipt for committing to a random NFT
+        let receipt: @RandomPicker.Receipt <- HotspotOperatorNFT.mintNFTCommit()
+        
+        // Save the receipt to storage for later use in the reveal transaction
+        acct.storage.save(<-receipt, to: RandomPicker.ReceiptStoragePath)
+        
+    }
+}
+
+			`,
+			proposer: magic.flow.authorization,
+			authorizations: [magic.flow.authorization],
+			payer: magic.flow.authorization,
+			limit: 999,
+		});
+
+		console.log('NFT mint commit transaction submitted:', transactionId);
+		return transactionId;
+	} catch (error) {
+		console.error('Error in NFT mint commit transaction:', error);
+		throw error;
+	}
+};
+
+// Mint NFT Reveal Transaction
+export const mintNFTReveal = async (magic: Magic): Promise<string> => {
+	try {
+		console.log('Executing NFT mint reveal transaction');
+
+		const transactionId = await fcl.mutate({
+			cadence: `
+			
+// mintNFTreveal.cdc
+//
+// This transaction reveals the random selection and completes the minting of a new HotspotOperatorNFT
+// This must be executed after running mintNFTcommit.cdc and waiting at least one block.
+
+import HotspotOperatorNFT from 0xcc6a3536f37381a2
+import RandomPicker from 0xcc6a3536f37381a2
+import NonFungibleToken from 0x631e88ae7f1d7c20
+
+transaction {
+    prepare(acct: auth(Storage, IssueStorageCapabilityController, PublishCapability) &Account) {
+        // Check if the user has a receipt from the commit step
+        let receipt <- acct.storage.load<@RandomPicker.Receipt>(from: RandomPicker.ReceiptStoragePath)
+            ?? panic("No receipt found. Make sure you've run mintNFTcommit.cdc first and waited at least one block")
+        
+        // Create a collection for the user if they don't already have one
+        if acct.storage.borrow<&HotspotOperatorNFT.Collection>(from: HotspotOperatorNFT.CollectionStoragePath) == nil {
+            let collection <- HotspotOperatorNFT.createEmptyCollection(nftType: Type<@HotspotOperatorNFT.NFT>())
+            
+            acct.storage.save(<-collection, to: HotspotOperatorNFT.CollectionStoragePath)
+            
+            let collectionCap = acct.capabilities.storage.issue<&HotspotOperatorNFT.Collection>(HotspotOperatorNFT.CollectionStoragePath)
+
+            acct.capabilities.publish(collectionCap, at: HotspotOperatorNFT.CollectionPublicPath)
+        }
+        
+        // Get the user's collection reference to receive the NFT
+        let collectionRef = acct.storage.borrow<&HotspotOperatorNFT.Collection>(
+            from: HotspotOperatorNFT.CollectionStoragePath
+        ) ?? panic("Could not borrow reference to HotspotOperatorNFT collection")
+        
+        // Call the reveal function to mint the NFT with random properties
+        HotspotOperatorNFT.mintNFTReveal(
+            recipient: collectionRef as &{HotspotOperatorNFT.HotspotOperatorNFTCollectionPublic},
+            receipt: <-receipt
+        )
+        
+    }
+}
+
+			
+			`,
+			proposer: magic.flow.authorization,
+			authorizations: [magic.flow.authorization],
+			payer: magic.flow.authorization,
+			limit: 999,
+		});
+
+		console.log('NFT mint reveal transaction submitted:', transactionId);
+		return transactionId;
+	} catch (error) {
+		console.error('Error in NFT mint reveal transaction:', error);
+		throw error;
+	}
+};
+
+// Complete NFT Minting Process (Commit then Reveal)
+export const mintNFTComplete = async (
+	magic: Magic
+): Promise<{
+	commitTxId: string;
+	revealTxId: string;
+}> => {
+	try {
+		// Step 1: Execute the commit transaction
+		const commitTxId = await mintNFTCommit(magic);
+
+		// Step 2: Wait for the commit transaction to be sealed
+		console.log('Waiting for commit transaction to be sealed...');
+		const commitTxResult = await fcl.tx(commitTxId).onceSealed();
+		console.log('Commit transaction sealed:', commitTxResult);
+
+		// Step 3: Execute the reveal transaction
+		const revealTxId = await mintNFTReveal(magic);
+
+		return {
+			commitTxId,
+			revealTxId,
+		};
+	} catch (error) {
+		console.error('Error in complete NFT minting process:', error);
+		throw error;
+	}
 };
 
 // Mint an NFT for a user (simulation mode)

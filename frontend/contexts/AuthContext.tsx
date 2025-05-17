@@ -6,11 +6,14 @@ import {
 	logoutFromMagic,
 	initFCL,
 } from '../services/auth';
+import { useMagic } from './MagicContext';
 
 // Create Auth Context
 const AuthContext = createContext<AuthContextType>({
 	user: null,
 	isLoading: true,
+	isInitialized: false,
+	isAuthenticated: false,
 	login: async () => {},
 	logout: async () => {},
 });
@@ -19,8 +22,10 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
+	const { magic, isInitializing } = useMagic();
 	const [user, setUser] = useState<User | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
 	// Initialize auth state
 	useEffect(() => {
@@ -29,24 +34,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 				// Initialize Flow Client Library
 				initFCL();
 
+				// Don't proceed until Magic is ready
+				if (isInitializing || !magic) return;
+
 				// Check if user is already logged in
 				const loggedInUser = await checkUserLoggedIn();
+
+				// If we get a user from FCL, also add the addr field
+				// for compatibility with components expecting FCL user format
+				if (loggedInUser) {
+					loggedInUser.addr = loggedInUser.address;
+				}
+
 				setUser(loggedInUser);
 			} catch (error) {
 				console.error('Error initializing auth:', error);
 			} finally {
 				setIsLoading(false);
+				setIsInitialized(true);
 			}
 		};
 
 		initAuth();
-	}, []);
+	}, [isInitializing, magic]);
 
 	// Login with Magic Link
 	const login = async (email: string) => {
 		try {
 			setIsLoading(true);
 			const loggedInUser = await loginWithMagic(email);
+
+			// Add addr field for compatibility with FCL components
+			loggedInUser.addr = loggedInUser.address;
+
 			setUser(loggedInUser);
 		} catch (error) {
 			console.error('Error logging in:', error);
@@ -70,8 +90,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 		}
 	};
 
+	// Compute isAuthenticated based on user state
+	const isAuthenticated = user !== null && user.loggedIn;
+
 	return (
-		<AuthContext.Provider value={{ user, isLoading, login, logout }}>
+		<AuthContext.Provider
+			value={{
+				user,
+				isLoading,
+				isInitialized,
+				isAuthenticated,
+				login,
+				logout,
+			}}
+		>
 			{children}
 		</AuthContext.Provider>
 	);
