@@ -142,7 +142,7 @@ const DashboardPage = () => {
 					<Card>
 						<div className="px-4 py-5 sm:p-6">
 							<div className="flex items-center">
-								<div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
+								<div className="flex-shrink-0 bg-[rgb(117,206,254)] rounded-md p-3">
 									<svg
 										className="h-6 w-6 text-white"
 										xmlns="http://www.w3.org/2000/svg"

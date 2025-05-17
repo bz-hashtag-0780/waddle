@@ -223,7 +223,7 @@ export default function Home() {
 								<div className="flow-root bg-white rounded-lg px-6 pb-8">
 									<div className="-mt-6">
 										<div>
-											<span className="inline-flex items-center justify-center p-3 bg-blue-500 rounded-md shadow-lg">
+											<span className="inline-flex items-center justify-center p-3 bg-[rgb(117,206,254)] rounded-md shadow-lg">
 												<svg
 													className="h-6 w-6 text-white"
 													xmlns="http://www.w3.org/2000/svg"
@@ -256,7 +256,7 @@ export default function Home() {
 								<div className="flow-root bg-white rounded-lg px-6 pb-8">
 									<div className="-mt-6">
 										<div>
-											<span className="inline-flex items-center justify-center p-3 bg-blue-500 rounded-md shadow-lg">
+											<span className="inline-flex items-center justify-center p-3 bg-[rgb(117,206,254)] rounded-md shadow-lg">
 												<svg
 													className="h-6 w-6 text-white"
 													xmlns="http://www.w3.org/2000/svg"
@@ -290,7 +290,7 @@ export default function Home() {
 								<div className="flow-root bg-white rounded-lg px-6 pb-8">
 									<div className="-mt-6">
 										<div>
-											<span className="inline-flex items-center justify-center p-3 bg-blue-500 rounded-md shadow-lg">
+											<span className="inline-flex items-center justify-center p-3 bg-[rgb(117,206,254)] rounded-md shadow-lg">
 												<svg
 													className="h-6 w-6 text-white"
 													xmlns="http://www.w3.org/2000/svg"
@@ -332,7 +332,7 @@ export default function Home() {
 						</span>
 						<span className="block">Join our network today</span>
 					</h2>
-					<p className="mt-4 text-lg leading-6 text-blue-200">
+					<p className="mt-4 text-lg leading-6 text-white-500">
 						Be part of the decentralized 5G revolution and earn
 						rewards while providing essential connectivity.
 					</p>

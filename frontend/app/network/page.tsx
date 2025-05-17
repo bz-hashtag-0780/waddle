@@ -135,7 +135,7 @@ const NetworkPage = () => {
 						</h3>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div className="flex items-center">
-								<div className="h-4 w-4 rounded-full bg-blue-500 mr-2"></div>
+								<div className="h-4 w-4 rounded-full bg-[rgb(117,206,254)] mr-2"></div>
 								<span className="text-sm text-gray-700">
 									Online Hotspot
 								</span>
