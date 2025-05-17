@@ -9,6 +9,12 @@ fcl.config()
 	.put('0xHotspotOperatorNFT', '0xcc6a3536f37381a2')
 	.put('0xHotspotRegistry', '0xcc6a3536f37381a2')
 	.put('0xUptimeProof', '0xcc6a3536f37381a2')
-	.put('0xFIVEGCOIN', '0xcc6a3536f37381a2');
+	.put('0xFIVEGCOIN', '0xcc6a3536f37381a2')
+	.put('0xHybridCustody', '0x294e44e1ec6993c6')
+	.put('0xMetadataViews', '0x631e88ae7f1d7c20')
+	.put('0xViewResolver', '0x631e88ae7f1d7c20')
+	.put('0xCapabilityFactory', '0x294e44e1ec6993c6')
+	.put('0xCapabilityFilter', '0x294e44e1ec6993c6')
+	.put('0xCapabilityDelegator', '0x294e44e1ec6993c6');
 
 export default fcl;
