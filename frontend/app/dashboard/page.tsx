@@ -84,7 +84,7 @@ const DashboardPage = () => {
 		return (
 			<div className="flex min-h-screen items-center justify-center">
 				<svg
-					className="animate-spin h-12 w-12 text-blue-600"
+					className="animate-spin h-12 w-12 text-[rgb(117,206,254)]"
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
 					viewBox="0 0 24 24"
@@ -129,7 +129,7 @@ const DashboardPage = () => {
 								Register New Hotspot
 							</Button>
 						) : (
-							<Button onClick={() => router.push('/nft/mint')}>
+							<Button onClick={() => router.push('/nfts')}>
 								Get Operator NFT
 							</Button>
 						)}

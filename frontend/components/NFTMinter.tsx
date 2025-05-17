@@ -82,13 +82,17 @@ export default function NFTMinter({ onSuccess }: NFTMinterProps) {
 			<div className="mt-4 text-sm">
 				{commitTxId && (
 					<div>
-						<p className="font-semibold">Commit Transaction:</p>
+						<p className="text-gray-900 font-semibold">
+							Commit Transaction:
+						</p>
 						<p className="text-gray-600 break-all">{commitTxId}</p>
 					</div>
 				)}
 				{revealTxId && (
 					<div className="mt-2">
-						<p className="font-semibold">Reveal Transaction:</p>
+						<p className="text-gray-900 font-semibold">
+							Reveal Transaction:
+						</p>
 						<p className="text-gray-600 break-all">{revealTxId}</p>
 					</div>
 				)}
@@ -100,7 +104,9 @@ export default function NFTMinter({ onSuccess }: NFTMinterProps) {
 		<Card title="Mint Hotspot Operator NFT">
 			<div className="flex flex-col items-center">
 				<div className="mb-4 text-center">
-					<p className="text-lg mb-2">{renderStepMessage()}</p>
+					<p className="text-gray-900 text-lg mb-2">
+						{renderStepMessage()}
+					</p>
 					<p className="text-sm text-gray-600">
 						This NFT allows you to register and operate hotspots on
 						our 5G network.

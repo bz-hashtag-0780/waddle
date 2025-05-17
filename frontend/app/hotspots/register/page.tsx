@@ -53,7 +53,7 @@ const RegisterHotspotPage = () => {
 			<Layout>
 				<div className="flex justify-center items-center h-64">
 					<svg
-						className="animate-spin h-8 w-8 text-blue-600"
+						className="animate-spin h-8 w-8 text-[rgb(117,206,254)]"
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
 						viewBox="0 0 24 24"
@@ -107,8 +107,8 @@ const RegisterHotspotPage = () => {
 						<div className="mt-6">
 							<button
 								type="button"
-								onClick={() => router.push('/nft/mint')}
-								className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+								onClick={() => router.push('/nfts')}
+								className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[rgb(80,202,255)] hover:bg-[rgb(117,206,254)]"
 							>
 								Get Operator NFT
 							</button>

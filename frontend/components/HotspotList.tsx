@@ -17,7 +17,7 @@ const HotspotList: React.FC<HotspotListProps> = ({
 			<Card>
 				<div className="flex justify-center items-center py-12">
 					<svg
-						className="animate-spin h-8 w-8 text-blue-600"
+						className="animate-spin h-8 w-8 text-[rgb(117,206,254)]"
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
 						viewBox="0 0 24 24"
@@ -54,7 +54,7 @@ const HotspotList: React.FC<HotspotListProps> = ({
 					<div className="mt-6">
 						<Link
 							href="/hotspots/register"
-							className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+							className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[rgb(80,202,255)] hover:bg-[rgb(117,206,254)]"
 						>
 							Register a Hotspot
 						</Link>
@@ -118,7 +118,7 @@ const HotspotList: React.FC<HotspotListProps> = ({
 						</div>
 						<Link
 							href={`/hotspots/${hotspot.id}`}
-							className="text-sm text-blue-600 hover:text-blue-500"
+							className="text-sm text-[rgb(117,206,254)] hover:text-blue-500"
 						>
 							View Details
 						</Link>

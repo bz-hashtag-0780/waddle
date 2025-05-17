@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 							<div className="flex-shrink-0 flex items-center">
 								<Link
 									href="/"
-									className="text-2xl font-bold text-blue-600"
+									className="text-2xl font-bold text-[rgb(117,206,254)]"
 								>
 									Waddle $5G
 								</Link>
@@ -62,7 +62,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 									</span>
 									<button
 										onClick={() => logout()}
-										className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+										className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-[rgb(80,202,255)] hover:bg-[rgb(117,206,254)]"
 									>
 										Logout
 									</button>
@@ -70,7 +70,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 							) : (
 								<Link
 									href="/login"
-									className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+									className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-[rgb(80,202,255)] hover:bg-[rgb(117,206,254)]"
 								>
 									Login
 								</Link>

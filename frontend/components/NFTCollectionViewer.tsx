@@ -403,7 +403,7 @@ const NFTCollectionViewer = forwardRef<
 
 								<div className="mt-6 pt-4 border-t">
 									<button
-										className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+										className="w-full py-2 px-4 bg-[rgb(80,202,255)] hover:bg-[rgb(117,206,254)] text-white font-medium rounded-lg transition-colors"
 										onClick={closeModal}
 									>
 										Use this NFT

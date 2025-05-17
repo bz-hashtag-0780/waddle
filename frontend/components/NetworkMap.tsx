@@ -49,7 +49,7 @@ const NetworkMap: React.FC<NetworkMapProps> = ({
 				className="bg-gray-100 flex items-center justify-center"
 			>
 				<svg
-					className="animate-spin h-8 w-8 text-blue-600"
+					className="animate-spin h-8 w-8 text-[rgb(117,206,254)]"
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
 					viewBox="0 0 24 24"

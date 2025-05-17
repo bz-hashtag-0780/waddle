@@ -95,7 +95,7 @@ export default function Home() {
 								<div className="flex w-full items-center justify-between md:w-auto">
 									<Link
 										href="/"
-										className="text-2xl font-bold text-blue-600"
+										className="text-2xl font-bold text-[rgb(117,206,254)]"
 									>
 										Waddle $5G
 									</Link>
@@ -145,14 +145,14 @@ export default function Home() {
 								{user ? (
 									<Link
 										href="/dashboard"
-										className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+										className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-[rgb(80,202,255)] hover:bg-[rgb(117,206,254)]"
 									>
 										Dashboard
 									</Link>
 								) : (
 									<Link
 										href="/login"
-										className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+										className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-[rgb(80,202,255)] hover:bg-[rgb(117,206,254)]"
 									>
 										Log in
 									</Link>
@@ -168,7 +168,7 @@ export default function Home() {
 								<span className="block">
 									Decentralized 5G Network
 								</span>
-								<span className="block text-blue-600">
+								<span className="block text-[rgb(117,206,254)]">
 									on Flow Blockchain
 								</span>
 							</h1>
@@ -180,7 +180,7 @@ export default function Home() {
 								<div className="rounded-md shadow">
 									<Link
 										href={user ? '/dashboard' : '/login'}
-										className="flex w-full items-center justify-center rounded-md border border-transparent bg-blue-600 px-8 py-3 text-base font-medium text-white hover:bg-blue-700 md:py-4 md:px-10 md:text-lg"
+										className="flex w-full items-center justify-center rounded-md border border-transparent bg-[rgb(80,202,255)] px-8 py-3 text-base font-medium text-white hover:bg-[rgb(117,206,254)] md:py-4 md:px-10 md:text-lg"
 									>
 										{user
 											? 'Go to Dashboard'
@@ -190,7 +190,7 @@ export default function Home() {
 								<div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
 									<Link
 										href="/network"
-										className="flex w-full items-center justify-center rounded-md border border-transparent bg-white px-8 py-3 text-base font-medium text-blue-600 hover:bg-gray-50 md:py-4 md:px-10 md:text-lg"
+										className="flex w-full items-center justify-center rounded-md border border-transparent bg-white px-8 py-3 text-base font-medium text-[rgb(117,206,254)] hover:bg-gray-50 md:py-4 md:px-10 md:text-lg"
 									>
 										View Network Map
 									</Link>
@@ -205,7 +205,7 @@ export default function Home() {
 			<div className="bg-gray-50 py-16 sm:py-24" id="features">
 				<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 					<div className="text-center">
-						<h2 className="text-base font-semibold uppercase tracking-wide text-blue-600">
+						<h2 className="text-base font-semibold uppercase tracking-wide text-[rgb(117,206,254)]">
 							Features
 						</h2>
 						<p className="mt-1 text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
@@ -324,7 +324,7 @@ export default function Home() {
 			</div>
 
 			{/* CTA Section */}
-			<div className="bg-blue-700">
+			<div className="bg-[rgb(117,206,254)]">
 				<div className="mx-auto max-w-2xl py-16 px-4 text-center sm:py-20 sm:px-6 lg:px-8">
 					<h2 className="text-3xl font-extrabold text-white sm:text-4xl">
 						<span className="block">
@@ -338,7 +338,7 @@ export default function Home() {
 					</p>
 					<Link
 						href={user ? '/dashboard' : '/login'}
-						className="mt-8 inline-flex w-full items-center justify-center rounded-md border border-transparent bg-white px-5 py-3 text-base font-medium text-blue-600 hover:bg-blue-50 sm:w-auto"
+						className="mt-8 inline-flex w-full items-center justify-center rounded-md border border-transparent bg-white px-5 py-3 text-base font-medium text-[rgb(117,206,254)] hover:bg-blue-50 sm:w-auto"
 					>
 						{user ? 'Go to Dashboard' : 'Get Started'}
 					</Link>
