@@ -7,7 +7,7 @@ import Card from './Card';
 import { useMagic } from '../contexts/MagicContext';
 
 interface NFTMinterProps {
-	onSuccess?: (nftId: number) => void;
+	onSuccess?: (nftId: string | number) => void;
 }
 
 export default function NFTMinter({ onSuccess }: NFTMinterProps) {
@@ -39,9 +39,13 @@ export default function NFTMinter({ onSuccess }: NFTMinterProps) {
 			setRevealTxId(revealTxId);
 			setStep('complete');
 
-			// Call onSuccess callback if provided (with mock NFT ID for now)
+			// Call onSuccess callback to refresh the collection
 			if (onSuccess) {
-				onSuccess(Date.now()); // Using timestamp as a mock ID
+				// Using revealTxId as a unique identifier for this mint
+				onSuccess(revealTxId);
+				console.log(
+					'Mint completed successfully, requesting collection refresh...'
+				);
 			}
 		} catch (error) {
 			console.error('Error minting NFT:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import { getUserNFTs } from '../services/flow';
 import Card from './Card';
 import Image from 'next/image';
@@ -47,13 +47,32 @@ interface NFTCollectionViewerProps {
 	userAddress: string;
 }
 
-export default function NFTCollectionViewer({
-	userAddress,
-}: NFTCollectionViewerProps) {
+// Define a ref interface for external methods
+export interface NFTCollectionViewerRef {
+	refreshCollection: () => void;
+}
+
+const NFTCollectionViewer = forwardRef<
+	NFTCollectionViewerRef,
+	NFTCollectionViewerProps
+>(({ userAddress }, ref) => {
 	const [nfts, setNfts] = useState<NFT[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [selectedNft, setSelectedNft] = useState<NFT | null>(null);
+	const [refreshCounter, setRefreshCounter] = useState(0);
+
+	// Function to manually refresh the NFT collection
+	const refreshCollection = () => {
+		console.log('Refreshing NFT collection...');
+		setRefreshCounter((prev) => prev + 1);
+		// Will trigger the useEffect since refreshCounter is a dependency
+	};
+
+	// Expose the refreshCollection method to parent components
+	useImperativeHandle(ref, () => ({
+		refreshCollection,
+	}));
 
 	useEffect(() => {
 		const fetchNFTs = async () => {
@@ -62,7 +81,12 @@ export default function NFTCollectionViewer({
 			setIsLoading(true);
 			setError(null);
 			try {
-				const userNfts = await getUserNFTs(userAddress);
+				console.log('Fetching NFTs for address:', userAddress);
+				// Use skipCache=true when refreshCounter > 0 to bypass caching
+				const userNfts = await getUserNFTs(
+					userAddress,
+					refreshCounter > 0
+				);
 
 				// Debug the raw NFT data
 				console.log(
@@ -121,7 +145,7 @@ export default function NFTCollectionViewer({
 		};
 
 		fetchNFTs();
-	}, [userAddress]);
+	}, [userAddress, refreshCounter]);
 
 	const handleNftClick = (nft: NFT) => {
 		setSelectedNft(nft);
@@ -392,4 +416,9 @@ export default function NFTCollectionViewer({
 			)}
 		</div>
 	);
-}
+});
+
+// Add display name
+NFTCollectionViewer.displayName = 'NFTCollectionViewer';
+
+export default NFTCollectionViewer;

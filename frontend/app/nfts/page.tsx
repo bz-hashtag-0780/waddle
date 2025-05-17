@@ -1,16 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMagic } from '../../contexts/MagicContext';
 import NFTMinter from '../../components/NFTMinter';
-import NFTCollectionViewer from '../../components/NFTCollectionViewer';
+import NFTCollectionViewer, {
+	NFTCollectionViewerRef,
+} from '../../components/NFTCollectionViewer';
 
 export default function NFTsPage() {
 	const { user, isInitialized, isAuthenticated } = useAuth();
 	const { magic, isInitializing } = useMagic();
 	const [userAddress, setUserAddress] = useState<string>('');
 	const [showRefresh, setShowRefresh] = useState(false);
+	// Create a ref to access the NFTCollectionViewer methods
+	const collectionViewerRef = useRef<NFTCollectionViewerRef>(null);
 
 	useEffect(() => {
 		if (isAuthenticated && user?.addr) {
@@ -19,25 +23,24 @@ export default function NFTsPage() {
 	}, [isAuthenticated, user]);
 
 	const handleMintSuccess = () => {
-		// Show refresh button to reload the collection after minting
+		// Show refresh button after minting
 		setShowRefresh(true);
+
+		// Try to refresh the collection automatically after minting
+		if (collectionViewerRef.current) {
+			// Small delay to ensure transaction has time to be processed
+			setTimeout(() => {
+				collectionViewerRef.current?.refreshCollection();
+			}, 2000);
+		}
 	};
 
 	const handleRefreshCollection = () => {
-		// Force re-render of collection by updating the key
-		setShowRefresh(false);
-		// Small timeout to ensure state updates properly
-		setTimeout(() => {
-			setUserAddress((prev) =>
-				prev ? `${prev}_refreshed_${Date.now()}` : ''
-			);
-			// Re-set the actual address after the refresh
-			setTimeout(() => {
-				if (user?.addr) {
-					setUserAddress(user.addr);
-				}
-			}, 100);
-		}, 100);
+		console.log('Refresh collection button clicked');
+		// Use the ref method to refresh the collection
+		if (collectionViewerRef.current) {
+			collectionViewerRef.current.refreshCollection();
+		}
 	};
 
 	if (!isInitialized || isInitializing) {
@@ -130,7 +133,12 @@ export default function NFTsPage() {
 				</div>
 			)}
 
-			{userAddress && <NFTCollectionViewer userAddress={userAddress} />}
+			{userAddress && (
+				<NFTCollectionViewer
+					ref={collectionViewerRef}
+					userAddress={userAddress}
+				/>
+			)}
 		</div>
 	);
 }

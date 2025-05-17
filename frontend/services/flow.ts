@@ -457,7 +457,8 @@ export const isUserAccountSetup = async (address: string): Promise<boolean> => {
 
 // Get NFTs owned by a user - Enhanced with proper error handling and data normalization
 export const getUserNFTs = async (
-	address: string
+	address: string,
+	skipCache: boolean = false
 ): Promise<
 	Array<{
 		id:
@@ -483,7 +484,12 @@ export const getUserNFTs = async (
 	}>
 > => {
 	try {
-		console.log('Getting NFTs for address:', address);
+		// Log whether we're skipping cache or not
+		console.log(
+			`Getting NFTs for address: ${address}${
+				skipCache ? ' (bypassing cache)' : ''
+			}`
+		);
 
 		// Execute a simpler FCL script that just gets the NFT IDs
 		const nftData = await fcl.query({
@@ -509,6 +515,8 @@ export const getUserNFTs = async (
 				}
 			`,
 			args: (arg, t) => [arg(address, t.Address)],
+			// If skipCache is true, tell FCL not to use cached results
+			...(skipCache ? { skipCache: true } : {}),
 		});
 
 		console.log('NFT data fetched from blockchain:', nftData);
