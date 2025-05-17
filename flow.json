@@ -62,6 +62,14 @@
 				"testing": "0000000000000007",
 				"testnet": "ed24dbe901028c5c"
 			}
+		},
+		"CrossVMMetadataViews": {
+			"source": "./flow/cadence/contracts/CrossVMMetadataViews.cdc",
+			"aliases": {
+				"testing": "0000000000000007",
+				"mainnet": "0x1d7e57aa55817448",
+				"testnet": "0x631e88ae7f1d7c20"
+			}
 		}
 	},
 	"dependencies": {
@@ -198,7 +206,7 @@
 			}
 		},
 		"testnet-account": {
-			"address": "0x2f52190177ec174b",
+			"address": "0xcc6a3536f37381a2",
 			"key": {
 				"type": "file",
 				"location": "testnet-account.pkey"
