@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMagic } from '@/contexts/MagicContext';
+import * as fcl from '@onflow/fcl';
 import Layout from '@/components/Layout';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
-import * as fcl from '@onflow/fcl';
 import FlowWalletConnect from '@/components/FlowWalletConnect';
 
 // Define step types
@@ -23,6 +24,7 @@ type LinkingStatus = 'idle' | 'loading' | 'error' | 'success';
 export default function AccountLinkingPage() {
 	const router = useRouter();
 	const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+	const { magic } = useMagic();
 	const [currentStep, setCurrentStep] = useState<Step>('intro');
 	const [linkingStatus, setLinkingStatus] = useState<LinkingStatus>('idle');
 	const [flowAddress, setFlowAddress] = useState<string>('');
@@ -38,6 +40,9 @@ export default function AccountLinkingPage() {
 
 	// Progress to next step
 	const nextStep = () => {
+		// Reset linking status when moving to a new step
+		setLinkingStatus('idle');
+
 		switch (currentStep) {
 			case 'intro':
 				setCurrentStep('connect-wallet');
@@ -67,186 +72,372 @@ export default function AccountLinkingPage() {
 
 	// Step 3: Create capability from Magic account to Flow Wallet
 	const handleCreateCapability = async () => {
+		console.log('====== STEP 3: CREATE CAPABILITY ======');
+		console.log('handleCreateCapability called, flowAddress:', flowAddress);
 		setLinkingStatus('loading');
 		try {
-			// First ensure the child account is set up
-			const setupChildTxId = await fcl.mutate({
-				cadence: `
-					import HybridCustody from 0xHybridCustody
-					import MetadataViews from 0xMetadataViews
-					
-					transaction {
-						prepare(signer: auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account) {
-							// Check if the OwnedAccount already exists
-							if signer.storage.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) == nil {
-								// Create the AuthAccount capability for the owned account
-								let acctCap = signer.capabilities.account.issue<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>()
+			// Reset error state
+			setErrorMessage('');
+
+			// Validate Magic instance
+			if (!magic) {
+				console.error('Magic is not initialized!');
+				throw new Error('Magic is not initialized. Please try again.');
+			}
+
+			// Log Magic instance details
+			console.log('Magic instance available:', !!magic);
+			console.log('Magic user info:', await magic.user.getInfo());
+			console.log('Magic flow extension:', !!magic.flow);
+
+			// Log FCL current user
+			console.log(
+				'FCL current user:',
+				await fcl.currentUser().snapshot()
+			);
+
+			// FIRST TRANSACTION: Setup Child Account
+			// ----------------------------------------
+			console.log('STARTING TRANSACTION 1: Setup Child Account');
+			console.log('Preparing transaction...');
+
+			let setupTxId;
+			try {
+				setupTxId = await fcl.mutate({
+					cadence: `
+						import HybridCustody from 0x294e44e1ec6993c6
+						import MetadataViews from 0x1d7e57aa55817448
+						
+						transaction {
+							prepare(acct: AuthAccount) {
+								// Debug logging
+								log("Starting setup transaction...")
+								log("Account address: ".concat(acct.address.toString()))
 								
-								// Create a new OwnedAccount resource with the account capability
-								let ownedAccount <- HybridCustody.createOwnedAccount(acct: acctCap)
+								// Check if ChildAccount already exists
+								if acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildAccountStoragePath) != nil {
+									log("ChildAccount already set up, skipping setup")
+									return
+								}
 								
-								// Save the OwnedAccount to storage
-								signer.storage.save(<-ownedAccount, to: HybridCustody.OwnedAccountStoragePath)
+								// Create a ChildAccount resource
+								log("Creating ChildAccount resource...")
+								let childAccount <- HybridCustody.createChildAccount()
 								
-								// Create a public capability for the OwnedAccount
-								signer.capabilities.publish(
-									signer.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic}>(
-										HybridCustody.OwnedAccountStoragePath
-									),
-									at: HybridCustody.OwnedAccountPublicPath
-								)
+								// Save it to storage
+								log("Saving ChildAccount to storage...")
+								acct.save(<-childAccount, to: HybridCustody.ChildAccountStoragePath)
+								
+								// Create public capability
+								log("Creating public capability...")
+								let cap = acct.capabilities.storage.issue<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPublic}>(HybridCustody.ChildAccountStoragePath)
+								acct.capabilities.publish(cap, at: HybridCustody.ChildAccountPublicPath)
+								
+								log("ChildAccount setup complete")
 							}
 						}
-					}
-				`,
-				limit: 9999,
-			});
+					`,
+					proposer: magic.flow.authorization,
+					authorizations: [magic.flow.authorization],
+					payer: magic.flow.authorization,
+					limit: 999,
+				});
+				console.log('Setup transaction submitted with ID:', setupTxId);
+			} catch (txError: unknown) {
+				console.error('Error submitting setup transaction:', txError);
+				throw new Error(
+					`Setup transaction failed: ${
+						txError instanceof Error
+							? txError.message
+							: 'Unknown error'
+					}`
+				);
+			}
 
-			await fcl.tx(setupChildTxId).onceSealed();
+			// Wait for transaction to be sealed
+			console.log('Waiting for setup transaction to be sealed...');
+			try {
+				const setupResult = await fcl.tx(setupTxId).onceSealed();
+				console.log('Setup transaction sealed result:', setupResult);
+			} catch (sealError) {
+				console.error(
+					'Error waiting for setup transaction to be sealed:',
+					sealError
+				);
+				throw new Error(
+					'Transaction failed to complete. Please try again.'
+				);
+			}
 
-			// Then publish to parent
-			const createCapabilityTxId = await fcl.mutate({
-				cadence: `
-					import HybridCustody from 0xHybridCustody
-					import CapabilityFactory from 0xCapabilityFactory
-					import CapabilityFilter from 0xCapabilityFilter
-					import CapabilityDelegator from 0xCapabilityDelegator
-					
-					transaction(parentAddress: Address) {
-						prepare(signer: auth(Storage, Capabilities) &Account) {
-							// Get the OwnedAccount resource
-							let ownedAccount = signer.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(
-								from: HybridCustody.OwnedAccountStoragePath
-							) ?? panic("OwnedAccount not found, please setup your child account first")
-							
-							// Check if already published to this parent
-							if ownedAccount.isChildOf(parentAddress) {
-								panic("Already published to this parent address")
+			// SECOND TRANSACTION: Publish to Parent
+			// ----------------------------------------
+			console.log('STARTING TRANSACTION 2: Publish to Parent');
+			console.log('Preparing publish transaction...');
+
+			let publishTxId;
+			try {
+				publishTxId = await fcl.mutate({
+					cadence: `
+						import HybridCustody from 0x294e44e1ec6993c6
+						
+						transaction(parentAddress: Address) {
+							prepare(acct: AuthAccount) {
+								// Debug logging
+								log("Starting publish transaction...")
+								log("Account address: ".concat(acct.address.toString()))
+								log("Parent address: ".concat(parentAddress.toString()))
+								
+								// Borrow child account
+								let childAccount = acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildAccountStoragePath)
+									?? panic("Could not borrow ChildAccount - did you run setup first?")
+								
+								// Add parent account to list of authorized parents
+								log("Publishing to parent...")
+								childAccount.publishToParent(parentAddress: parentAddress)
+								
+								log("Capability published to parent successfully")
 							}
-							
-							// Get the needed manager, filter, and factory capabilities from the HybridCustody contract
-							// These values would normally need to be fetched from deployed contract addresses
-							
-							// For the purpose of this demo, we'll use simplified initialization
-							// In a production environment, you would need proper capability setup
-							
-							// Create factory & filter capabilities - method will depend on actual contract implementation
-							let factoryRef <- CapabilityFactory.createManager()
-							signer.storage.save(<-factoryRef, to: /storage/hcFactoryManager)
-							
-							let factoryCap = signer.capabilities.storage.issue<&CapabilityFactory.Manager>(
-								/storage/hcFactoryManager
-							)
-							
-							let filterRef <- CapabilityFilter.AllowAllFilter()
-							signer.storage.save(<-filterRef, to: /storage/hcFilterAllowAll)
-							
-							let filterCap = signer.capabilities.storage.issue<&{CapabilityFilter.Filter}>(
-								/storage/hcFilterAllowAll
-							)
-							
-							// Publish the child account to the parent
-							ownedAccount.publishToParent(
-								parentAddress: parentAddress,
-								factory: factoryCap,
-								filter: filterCap
-							)
 						}
-					}
-				`,
-				args: (arg, t) => [arg(flowAddress, t.Address)],
-				limit: 9999,
-			});
+					`,
+					args: (arg, t) => [arg(flowAddress, t.Address)],
+					proposer: magic.flow.authorization,
+					authorizations: [magic.flow.authorization],
+					payer: magic.flow.authorization,
+					limit: 999,
+				});
+				console.log(
+					'Publish transaction submitted with ID:',
+					publishTxId
+				);
+			} catch (txError: unknown) {
+				console.error('Error submitting publish transaction:', txError);
+				throw new Error(
+					`Publish transaction failed: ${
+						txError instanceof Error
+							? txError.message
+							: 'Unknown error'
+					}`
+				);
+			}
 
-			await fcl.tx(createCapabilityTxId).onceSealed();
+			// Wait for transaction to be sealed
+			console.log('Waiting for publish transaction to be sealed...');
+			try {
+				const publishResult = await fcl.tx(publishTxId).onceSealed();
+				console.log(
+					'Publish transaction sealed result:',
+					publishResult
+				);
+			} catch (sealError) {
+				console.error(
+					'Error waiting for publish transaction to be sealed:',
+					sealError
+				);
+				throw new Error(
+					'Transaction failed to complete. Please try again.'
+				);
+			}
 
-			setTxId(createCapabilityTxId);
+			setTxId(publishTxId);
 			setLinkingStatus('success');
+			console.log('Moving to next step');
 			nextStep();
-		} catch (error) {
-			console.error('Error creating capability:', error);
-			setErrorMessage('Failed to create capability. Please try again.');
+		} catch (error: unknown) {
+			console.error('Error creating capability (detailed):', error);
+			setErrorMessage(
+				error instanceof Error
+					? error.message
+					: 'Failed to create capability. Please try again.'
+			);
 			setLinkingStatus('error');
 		}
 	};
 
 	// Step 4: Claim capability from Flow Wallet
 	const handleClaimCapability = async () => {
+		console.log('====== STEP 4: CLAIM CAPABILITY ======');
+		console.log(
+			'handleClaimCapability called, user address:',
+			user?.address
+		);
 		setLinkingStatus('loading');
 		try {
-			// First ensure the parent account is set up
-			const setupParentTxId = await fcl.mutate({
-				cadence: `
-					import HybridCustody from 0xHybridCustody
-					
-					transaction {
-						prepare(signer: auth(Storage, Capabilities) &Account) {
-							// Check if the Manager already exists
-							if signer.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
-								// Create a new Manager resource without a filter
-								let manager <- HybridCustody.createManager(filter: nil)
+			// Reset error state
+			setErrorMessage('');
+
+			// Ensure we have the Magic.link account address
+			if (!user?.address) {
+				console.error('User address not found');
+				throw new Error(
+					'Magic.link account address not found. Please reconnect.'
+				);
+			}
+
+			// Log the current FCL authentication state
+			const authState = await fcl.currentUser().snapshot();
+			console.log('Current FCL authentication state:', authState);
+
+			if (!authState.loggedIn) {
+				console.log(
+					'User not logged in to Flow wallet. Prompting login...'
+				);
+				await fcl.authenticate();
+				console.log(
+					'User logged in status:',
+					(await fcl.currentUser().snapshot()).loggedIn
+				);
+			}
+
+			// FIRST TRANSACTION: Setup Parent Account
+			// ----------------------------------------
+			console.log('STARTING TRANSACTION 1: Setup Parent Account');
+			console.log('Preparing setup parent transaction...');
+
+			let setupTxId;
+			try {
+				setupTxId = await fcl.mutate({
+					cadence: `
+						import HybridCustody from 0x294e44e1ec6993c6
+						
+						transaction {
+							prepare(acct: AuthAccount) {
+								// Debug logging
+								log("Starting parent setup transaction...")
+								log("Parent account address: ".concat(acct.address.toString()))
 								
-								// Save the Manager to storage
-								signer.storage.save(<-manager, to: HybridCustody.ManagerStoragePath)
+								// Check if parent account already exists
+								if acct.borrow<&HybridCustody.ParentAccount>(from: HybridCustody.ParentAccountStoragePath) != nil {
+									log("ParentAccount already set up, skipping setup")
+									return
+								}
 								
-								// Create a public capability for the Manager
-								signer.capabilities.publish(
-									signer.capabilities.storage.issue<&{HybridCustody.ManagerPublic}>(
-										HybridCustody.ManagerStoragePath
-									),
-									at: HybridCustody.ManagerPublicPath
-								)
+								// Create new parent account
+								log("Creating ParentAccount resource...")
+								let parentAccount <- HybridCustody.createParentAccount()
+								
+								// Save it to storage
+								log("Saving ParentAccount to storage...")
+								acct.save(<-parentAccount, to: HybridCustody.ParentAccountStoragePath)
+								
+								log("ParentAccount setup complete")
 							}
 						}
-					}
-				`,
-				limit: 9999,
-			});
-
-			await fcl.tx(setupParentTxId).onceSealed();
-
-			// Then claim the capability
-			if (!user?.address) {
-				throw new Error('User address not found');
+					`,
+					proposer: fcl.authz,
+					authorizations: [fcl.authz],
+					payer: fcl.authz,
+					limit: 999,
+				});
+				console.log(
+					'Setup parent transaction submitted with ID:',
+					setupTxId
+				);
+			} catch (txError: unknown) {
+				console.error(
+					'Error submitting setup parent transaction:',
+					txError
+				);
+				throw new Error(
+					`Setup parent transaction failed: ${
+						txError instanceof Error
+							? txError.message
+							: 'Unknown error'
+					}`
+				);
 			}
-			const childAddress = user.address;
-			const claimCapabilityTxId = await fcl.mutate({
-				cadence: `
-					import HybridCustody from 0xHybridCustody
-					import ViewResolver from 0xViewResolver
-					
-					transaction(childAddress: Address) {
-						prepare(signer: auth(Storage, Capabilities, Inbox) &Account) {
-							// Get the Manager resource
-							let manager = signer.storage.borrow<auth(HybridCustody.Manage) &HybridCustody.Manager>(
-								from: HybridCustody.ManagerStoragePath
-							) ?? panic("Manager not found, please setup your parent account first")
-							
-							// Get the identifier for the child account
-							let identifier = HybridCustody.getChildAccountIdentifier(signer.address)
-							
-							// Check if there's a message in the inbox with this capability
-							let capability = signer.inbox.claim<auth(HybridCustody.Child) &{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, ViewResolver.Resolver}>(
-								identifier,
-								provider: childAddress
-							) ?? panic("No capability found in inbox from provider: ".concat(childAddress.toString()))
-							
-							// Add the account to the manager
-							manager.addAccount(cap: capability)
-						}
-					}
-				`,
-				args: (arg, t) => [arg(childAddress, t.Address)],
-				limit: 9999,
-			});
 
-			await fcl.tx(claimCapabilityTxId).onceSealed();
+			// Wait for transaction to be sealed
+			console.log('Waiting for setup parent transaction to be sealed...');
+			try {
+				const setupResult = await fcl.tx(setupTxId).onceSealed();
+				console.log(
+					'Setup parent transaction sealed result:',
+					setupResult
+				);
+			} catch (sealError) {
+				console.error(
+					'Error waiting for setup parent transaction to be sealed:',
+					sealError
+				);
+				throw new Error(
+					'Transaction failed to complete. Please try again.'
+				);
+			}
+
+			// SECOND TRANSACTION: Claim Capability
+			// ----------------------------------------
+			console.log('STARTING TRANSACTION 2: Claim Capability');
+			console.log('Preparing claim transaction...');
+			console.log('Using child address for claim:', user.address);
+
+			let claimTxId;
+			try {
+				claimTxId = await fcl.mutate({
+					cadence: `
+						import HybridCustody from 0x294e44e1ec6993c6
+						
+						transaction(childAddress: Address) {
+							prepare(acct: AuthAccount) {
+								// Debug logging
+								log("Starting claim transaction...")
+								log("Parent account address: ".concat(acct.address.toString()))
+								log("Child address to claim: ".concat(childAddress.toString()))
+								
+								// Borrow parent account
+								let parentAccount = acct.borrow<&HybridCustody.ParentAccount>(from: HybridCustody.ParentAccountStoragePath)
+									?? panic("Could not borrow ParentAccount - did you run setup first?")
+								
+								// Claim child account capability
+								log("Claiming child account capability...")
+								parentAccount.claimChildAccount(childAddress: childAddress)
+								
+								log("Capability claimed successfully")
+							}
+						}
+					`,
+					args: (arg, t) => [arg(user.address, t.Address)],
+					proposer: fcl.authz,
+					authorizations: [fcl.authz],
+					payer: fcl.authz,
+					limit: 999,
+				});
+				console.log('Claim transaction submitted with ID:', claimTxId);
+			} catch (txError: unknown) {
+				console.error('Error submitting claim transaction:', txError);
+				throw new Error(
+					`Claim transaction failed: ${
+						txError instanceof Error
+							? txError.message
+							: 'Unknown error'
+					}`
+				);
+			}
+
+			// Wait for transaction to be sealed
+			console.log('Waiting for claim transaction to be sealed...');
+			try {
+				const claimResult = await fcl.tx(claimTxId).onceSealed();
+				console.log('Claim transaction sealed result:', claimResult);
+			} catch (sealError) {
+				console.error(
+					'Error waiting for claim transaction to be sealed:',
+					sealError
+				);
+				throw new Error(
+					'Transaction failed to complete. Please try again.'
+				);
+			}
 
 			setLinkingStatus('success');
+			console.log('Moving to next step');
 			nextStep();
-		} catch (error) {
-			console.error('Error claiming capability:', error);
-			setErrorMessage('Failed to claim capability. Please try again.');
+		} catch (error: unknown) {
+			console.error('Error claiming capability (detailed):', error);
+			setErrorMessage(
+				error instanceof Error
+					? error.message
+					: 'Failed to claim capability. Please try again.'
+			);
 			setLinkingStatus('error');
 		}
 	};
@@ -289,6 +480,25 @@ export default function AccountLinkingPage() {
 								<li>
 									Enhanced security through multi-account
 									ownership
+								</li>
+							</ul>
+						</div>
+						<div className="bg-yellow-50 p-4 rounded-lg mb-6 text-left">
+							<h3 className="font-medium text-yellow-700 mb-2">
+								Before you begin:
+							</h3>
+							<ul className="list-disc pl-5 text-yellow-600 space-y-1">
+								<li>
+									Make sure you have a Flow Wallet installed
+									(like Blocto or Lilico)
+								</li>
+								<li>
+									You&apos;ll need to approve several
+									transactions during the process
+								</li>
+								<li>
+									The linking process is secure and
+									doesn&apos;t transfer any assets
 								</li>
 							</ul>
 						</div>
@@ -366,7 +576,8 @@ export default function AccountLinkingPage() {
 						</h2>
 						<p className="text-gray-600 mb-6">
 							Create a capability from your Magic.link account to
-							your Flow Wallet.
+							your Flow Wallet. This step authorizes your Flow
+							wallet to access assets in your Magic.link account.
 						</p>
 						<div className="flex items-center justify-center mb-6">
 							<div className="bg-gray-100 p-4 rounded-lg">
@@ -398,9 +609,31 @@ export default function AccountLinkingPage() {
 								</p>
 							</div>
 						</div>
-						{linkingStatus === 'success' ? (
+
+						<div className="bg-blue-50 p-4 rounded-lg mb-6 text-left">
+							<h3 className="font-medium text-blue-700 mb-2">
+								What happens in this step:
+							</h3>
+							<ol className="list-decimal pl-5 text-blue-600 space-y-1">
+								<li>
+									Your Magic.link account will be prepared for
+									linking
+								</li>
+								<li>
+									You&apos;ll sign a transaction that creates
+									the capability
+								</li>
+								<li>
+									This will allow your Flow wallet to access
+									your assets
+								</li>
+							</ol>
+						</div>
+
+						{/* Success state */}
+						{linkingStatus === 'success' && (
 							<div className="bg-green-50 p-4 rounded-lg mb-6">
-								<p className="text-green-600">
+								<p className="text-green-600 font-medium mb-2">
 									Capability created successfully!
 								</p>
 								<p className="text-sm mt-2">Transaction ID:</p>
@@ -411,20 +644,63 @@ export default function AccountLinkingPage() {
 									Continue
 								</Button>
 							</div>
-						) : (
-							<Button
-								onClick={handleCreateCapability}
-								disabled={linkingStatus === 'loading'}
-								isLoading={linkingStatus === 'loading'}
-							>
-								{linkingStatus === 'loading'
-									? 'Creating...'
-									: 'Create Capability'}
-							</Button>
 						)}
+
+						{/* Loading state */}
+						{linkingStatus === 'loading' && (
+							<div className="space-y-4">
+								<div className="animate-pulse flex space-x-4 items-center justify-center">
+									<div className="rounded-full bg-blue-400 h-8 w-8"></div>
+									<div className="h-4 bg-blue-400 rounded w-48"></div>
+								</div>
+								<div className="text-blue-600">
+									{!txId ? (
+										<>
+											Creating capability, please approve
+											transactions in your wallet...
+										</>
+									) : (
+										<>
+											Waiting for transaction to be sealed
+											on the blockchain...
+										</>
+									)}
+								</div>
+								<button
+									disabled={true}
+									className="opacity-50 cursor-not-allowed py-2 px-4 bg-blue-100 text-blue-400 rounded-md"
+								>
+									Creating...
+								</button>
+							</div>
+						)}
+
+						{/* Idle state */}
+						{linkingStatus === 'idle' && (
+							<>
+								<Button
+									onClick={handleCreateCapability}
+									disabled={false}
+									isLoading={false}
+								>
+									Create Capability
+								</Button>
+								<p className="text-sm text-gray-500 mt-2">
+									You&apos;ll need to approve two transactions
+									in your Magic.link wallet
+								</p>
+							</>
+						)}
+
+						{/* Error state */}
 						{linkingStatus === 'error' && (
-							<div className="mt-4 text-red-500">
-								{errorMessage}
+							<div className="mt-4 p-3 bg-red-50 rounded-lg text-red-500 text-left">
+								<p className="font-medium mb-1">Error:</p>
+								<p>{errorMessage}</p>
+								<p className="mt-2 text-sm">
+									Please try again. If the error persists,
+									refresh the page and reconnect your wallet.
+								</p>
 							</div>
 						)}
 					</div>
@@ -438,7 +714,8 @@ export default function AccountLinkingPage() {
 						</h2>
 						<p className="text-gray-600 mb-6">
 							Claim the capability from your Flow Wallet to
-							complete the linking process.
+							complete the linking process. This step finalizes
+							the connection between your accounts.
 						</p>
 						<div className="flex items-center justify-center mb-6">
 							<div className="bg-gray-100 p-4 rounded-lg">
@@ -470,7 +747,29 @@ export default function AccountLinkingPage() {
 								</p>
 							</div>
 						</div>
-						{linkingStatus === 'success' ? (
+
+						<div className="bg-blue-50 p-4 rounded-lg mb-6 text-left">
+							<h3 className="font-medium text-blue-700 mb-2">
+								What happens in this step:
+							</h3>
+							<ol className="list-decimal pl-5 text-blue-600 space-y-1">
+								<li>
+									Your Flow wallet will accept the capability
+									created in the previous step
+								</li>
+								<li>
+									You&apos;ll need to sign a transaction from
+									your Flow wallet
+								</li>
+								<li>
+									This completes the link between your
+									accounts
+								</li>
+							</ol>
+						</div>
+
+						{/* Success state */}
+						{linkingStatus === 'success' && (
 							<div className="bg-green-50 p-4 rounded-lg mb-6">
 								<p className="text-green-600">
 									Capability claimed successfully!
@@ -479,20 +778,47 @@ export default function AccountLinkingPage() {
 									Continue
 								</Button>
 							</div>
-						) : (
+						)}
+
+						{/* Loading state */}
+						{linkingStatus === 'loading' && (
+							<div className="space-y-4">
+								<div className="animate-pulse flex space-x-4 items-center justify-center">
+									<div className="rounded-full bg-blue-400 h-8 w-8"></div>
+									<div className="h-4 bg-blue-400 rounded w-48"></div>
+								</div>
+								<div className="text-blue-600">
+									Processing transaction with Flow wallet...
+								</div>
+								<button
+									disabled={true}
+									className="opacity-50 cursor-not-allowed py-2 px-4 bg-blue-100 text-blue-400 rounded-md"
+								>
+									Claiming...
+								</button>
+							</div>
+						)}
+
+						{/* Idle state */}
+						{linkingStatus === 'idle' && (
 							<Button
 								onClick={handleClaimCapability}
-								disabled={linkingStatus === 'loading'}
-								isLoading={linkingStatus === 'loading'}
+								disabled={false}
+								isLoading={false}
 							>
-								{linkingStatus === 'loading'
-									? 'Claiming...'
-									: 'Claim Capability'}
+								Claim Capability
 							</Button>
 						)}
+
+						{/* Error state */}
 						{linkingStatus === 'error' && (
-							<div className="mt-4 text-red-500">
-								{errorMessage}
+							<div className="mt-4 p-3 bg-red-50 rounded-lg text-red-500 text-left">
+								<p className="font-medium mb-1">Error:</p>
+								<p>{errorMessage}</p>
+								<p className="mt-2 text-sm">
+									Please try again. If the error persists,
+									refresh the page and reconnect your wallet.
+								</p>
 							</div>
 						)}
 					</div>
@@ -531,7 +857,7 @@ export default function AccountLinkingPage() {
 									{user?.address || 'Loading...'}
 								</p>
 							</div>
-							<div className="bg-white p-4 rounded-lg">
+							<div className="bg-white p-4 rounded-lg mb-6">
 								<p className="text-gray-600">
 									Flow Wallet address:
 								</p>
@@ -539,10 +865,43 @@ export default function AccountLinkingPage() {
 									{flowAddress}
 								</p>
 							</div>
+
+							<div className="bg-blue-50 p-4 rounded-lg text-left">
+								<h3 className="font-medium text-blue-700 mb-2">
+									What you can do now:
+								</h3>
+								<ul className="list-disc pl-5 text-blue-600 space-y-1">
+									<li>
+										Access your Hotspot Operator NFTs from
+										both accounts
+									</li>
+									<li>
+										Use your Flow wallet with other dApps
+										while maintaining access
+									</li>
+									<li>
+										Manage your assets using either account
+									</li>
+								</ul>
+							</div>
 						</div>
-						<Button onClick={handleFinish}>
-							Return to Dashboard
-						</Button>
+
+						<div className="flex space-x-4 justify-center">
+							<Button onClick={handleFinish}>
+								Return to Dashboard
+							</Button>
+							<Button
+								onClick={() =>
+									window.open(
+										'https://flowscan.org',
+										'_blank'
+									)
+								}
+								variant="outline"
+							>
+								View on FlowScan
+							</Button>
+						</div>
 					</div>
 				);
 
