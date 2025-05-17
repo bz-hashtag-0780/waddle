@@ -11,6 +11,8 @@ import { Hotspot } from '@/types/flow';
 import {
 	getAllHotspots,
 	checkHotspotOperatorNFTOwnership,
+	getFIVEGCOINBalance,
+	getFlowBalance,
 } from '@/services/flow';
 
 const DashboardPage = () => {
@@ -21,6 +23,7 @@ const DashboardPage = () => {
 	const [hasNFT, setHasNFT] = useState<boolean>(false);
 	const [totalRewards, setTotalRewards] = useState<number>(0);
 	const [pendingRewards, setPendingRewards] = useState<number>(0);
+	const [flowBalance, setFlowBalance] = useState<number>(0);
 
 	useEffect(() => {
 		// Redirect to login if not authenticated
@@ -40,6 +43,20 @@ const DashboardPage = () => {
 						user.address
 					);
 					setHasNFT(ownsNFT);
+
+					// Get user's token balance
+					const tokenBalance = await getFIVEGCOINBalance(
+						user.address
+					);
+					setTotalRewards(tokenBalance);
+
+					// Get user's FLOW token balance
+					const flowTokenBalance = await getFlowBalance(user.address);
+					setFlowBalance(flowTokenBalance);
+
+					// For pending rewards, we'll just use a placeholder for now
+					// In a real implementation, this would come from the contract
+					setPendingRewards(Math.round(tokenBalance * 0.1)); // 10% of current balance as pending
 				}
 
 				// Fetch all hotspots
@@ -51,14 +68,6 @@ const DashboardPage = () => {
 				);
 
 				setHotspots(userHotspots);
-
-				// Calculate total rewards (simulation for demo)
-				const totalHours = userHotspots.reduce(
-					(sum, hotspot) => sum + hotspot.totalUptime / 3600,
-					0
-				);
-				setTotalRewards(Math.round(totalHours * 10)); // 10 tokens per hour
-				setPendingRewards(Math.round(totalHours * 2.5)); // Pending rewards (25% of total)
 			} catch (error) {
 				console.error('Error fetching dashboard data:', error);
 			} finally {
@@ -128,7 +137,7 @@ const DashboardPage = () => {
 				</div>
 
 				{/* Statistics Cards */}
-				<div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+				<div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
 					{/* Hotspots Card */}
 					<Card>
 						<div className="px-4 py-5 sm:p-6">
@@ -197,6 +206,46 @@ const DashboardPage = () => {
 												{isLoading
 													? '...'
 													: `${totalRewards} $5G`}
+											</div>
+										</dd>
+									</dl>
+								</div>
+							</div>
+						</div>
+					</Card>
+
+					{/* FLOW Balance Card */}
+					<Card>
+						<div className="px-4 py-5 sm:p-6">
+							<div className="flex items-center">
+								<div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
+									<svg
+										className="h-6 w-6 text-white"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
+										/>
+									</svg>
+								</div>
+								<div className="ml-5 w-0 flex-1">
+									<dl>
+										<dt className="text-sm font-medium text-gray-500 truncate">
+											FLOW Balance
+										</dt>
+										<dd>
+											<div className="text-lg font-medium text-gray-900">
+												{isLoading
+													? '...'
+													: `${flowBalance.toFixed(
+															4
+													  )} FLOW`}
 											</div>
 										</dd>
 									</dl>

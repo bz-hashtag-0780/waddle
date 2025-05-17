@@ -211,3 +211,96 @@ export const checkHotspotOperatorNFTOwnership = async (
 		throw error;
 	}
 };
+
+// Get a user's actual FLOW token balance
+export const getFlowBalance = async (address: string): Promise<number> => {
+	try {
+		console.log('Fetching real FLOW balance for address:', address);
+
+		// Use FCL's account API to get account details including balance
+		const accountInfo = await fcl.account(address);
+		console.log('Account info received:', accountInfo);
+
+		// The balance can be either a number or a string
+		if (accountInfo && accountInfo.balance !== undefined) {
+			// Convert to number in case it's a string, then divide by 10^8 (FLOW uses 8 decimal places)
+			const balanceAsNumber =
+				typeof accountInfo.balance === 'string'
+					? parseFloat(accountInfo.balance)
+					: accountInfo.balance;
+
+			const balanceAsFlow = balanceAsNumber / 100000000;
+			console.log('Parsed FLOW balance:', balanceAsFlow);
+			return balanceAsFlow;
+		}
+
+		console.warn(
+			'Could not get FLOW balance from account info',
+			accountInfo
+		);
+		return 0;
+	} catch (error) {
+		console.error('Error getting FLOW token balance:', error);
+		// Return 0 on error to be safe
+		return 0;
+	}
+};
+
+// Get FIVEGCOIN balance for a user - using mock data for now
+export const getFIVEGCOINBalance = async (address: string): Promise<number> => {
+	try {
+		console.log('Getting FIVEGCOIN balance for address:', address);
+
+		// For demonstration purposes, return a hardcoded value
+		// based on the first character of the address to make it unique per user
+		const firstChar = address.charAt(2); // Skip 0x prefix
+		const mockBalance = parseInt(firstChar, 16) || 1;
+		return 100 + mockBalance * 10; // Higher than FLOW to make it obvious
+	} catch (error) {
+		console.error('Error getting FIVEGCOIN balance:', error);
+		// Return a default value on error
+		return 100.0;
+	}
+};
+
+// Set up user account with required resources for NFTs and tokens
+export const setupUserAccount = async (): Promise<string> => {
+	try {
+		console.log('Setting up user account (mock)');
+		// In the real implementation, this would execute a transaction
+		// For now, just return a mock transaction ID
+		return 'mock-transaction-' + Date.now().toString();
+	} catch (error) {
+		console.error('Error setting up user account:', error);
+		throw error;
+	}
+};
+
+// Check if a user account is properly set up for NFTs and tokens
+export const isUserAccountSetup = async (address: string): Promise<boolean> => {
+	try {
+		console.log('Checking account setup for address:', address);
+		// For mock implementation, just return true
+		return true;
+	} catch (error) {
+		console.error('Error checking account setup:', error);
+		return false;
+	}
+};
+
+// Get NFTs owned by a user
+export const getUserNFTs = async (
+	address: string
+): Promise<Array<{ id: number; name: string }>> => {
+	try {
+		console.log('Getting NFTs for address:', address);
+		// Return mock NFT data
+		return [
+			{ id: 1, name: 'Hotspot Operator #1' },
+			{ id: 2, name: 'Hotspot Operator #2' },
+		];
+	} catch (error) {
+		console.error('Error getting user NFTs:', error);
+		return [];
+	}
+};

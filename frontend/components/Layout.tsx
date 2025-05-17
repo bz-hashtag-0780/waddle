@@ -87,7 +87,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 					<div className="py-6 md:flex md:items-center md:justify-between">
 						<div className="text-center md:text-left">
 							<p className="text-sm text-gray-500">
-								&copy; 2023 Waddle 5G Network. All rights
+								&copy; 2025 Waddle $5G Network. All rights
 								reserved.
 							</p>
 						</div>

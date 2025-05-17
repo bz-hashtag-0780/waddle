@@ -1,20 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Input from './Input';
 import Button from './Button';
 import Card from './Card';
-import { registerHotspot } from '@/services/flow';
+import { registerHotspot, getUserNFTs } from '@/services/flow';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HotspotRegistrationFormProps {
 	onSuccess?: (hotspotId: string) => void;
 }
 
+interface NFT {
+	id: number;
+	name: string;
+}
+
 const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 	onSuccess,
 }) => {
+	const { user } = useAuth();
 	const [lat, setLat] = useState<string>('');
 	const [lng, setLng] = useState<string>('');
+	const [nfts, setNfts] = useState<NFT[]>([]);
+	const [selectedNft, setSelectedNft] = useState<number | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string>('');
+
+	// Fetch user's NFTs
+	useEffect(() => {
+		const fetchNFTs = async () => {
+			if (!user?.address) return;
+
+			try {
+				setIsLoading(true);
+				const userNFTs = await getUserNFTs(user.address);
+				setNfts(userNFTs);
+				if (userNFTs.length > 0) {
+					setSelectedNft(userNFTs[0].id);
+				}
+			} catch (err) {
+				console.error('Error fetching NFTs:', err);
+				setError('Failed to load your NFTs. Please try again.');
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		fetchNFTs();
+	}, [user]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -22,6 +55,11 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 		// Form validation
 		if (!lat || !lng) {
 			setError('Please provide both latitude and longitude.');
+			return;
+		}
+
+		if (selectedNft === null) {
+			setError('Please select an NFT for this hotspot.');
 			return;
 		}
 
@@ -49,8 +87,12 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 				return;
 			}
 
-			// Register hotspot
-			const hotspotId = await registerHotspot(latNum, lngNum);
+			// Register hotspot with NFT
+			const hotspotId = await registerHotspot(
+				latNum,
+				lngNum,
+				selectedNft
+			);
 
 			// Clear form
 			setLat('');
@@ -71,7 +113,7 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 	return (
 		<Card
 			title="Register a New Hotspot"
-			description="Add a new 5G hotspot to the network."
+			description="Add a new 5G hotspot to the network using your NFT."
 		>
 			<form onSubmit={handleSubmit}>
 				<div className="space-y-4">
@@ -103,11 +145,45 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 						/>
 					</div>
 
+					<div>
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Select NFT for Registration
+						</label>
+						{isLoading ? (
+							<div className="animate-pulse bg-gray-200 rounded h-10 w-full"></div>
+						) : nfts.length === 0 ? (
+							<div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+								<p className="text-sm text-yellow-600">
+									You don&apos;t have any NFTs to register.
+									Please mint an NFT first.
+								</p>
+							</div>
+						) : (
+							<select
+								className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+								value={selectedNft || ''}
+								onChange={(e) =>
+									setSelectedNft(Number(e.target.value))
+								}
+								required
+							>
+								<option value="">Select an NFT</option>
+								{nfts.map((nft) => (
+									<option key={nft.id} value={nft.id}>
+										{nft.name} (ID: {nft.id})
+									</option>
+								))}
+							</select>
+						)}
+					</div>
+
 					<div className="flex justify-end">
 						<Button
 							type="submit"
 							isLoading={isSubmitting}
-							disabled={isSubmitting}
+							disabled={
+								isSubmitting || isLoading || nfts.length === 0
+							}
 						>
 							Register Hotspot
 						</Button>
