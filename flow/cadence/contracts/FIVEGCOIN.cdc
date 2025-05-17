@@ -13,6 +13,10 @@ access(all) contract FIVEGCOIN: FungibleToken {
     access(all) event TokensDeposited(amount: UFix64, to: Address?)
     access(all) event TokensMinted(amount: UFix64)
 
+    access(all) let VaultStoragePath: StoragePath
+    access(all) let VaultPublicPath: PublicPath
+    access(all) let ReceiverPublicPath: PublicPath
+
     access(all) var totalSupply: UFix64
     access(all) resource Vault: FungibleToken.Vault {
 
@@ -103,5 +107,15 @@ access(all) contract FIVEGCOIN: FungibleToken {
 
     init() {
         self.totalSupply = 0.0
+        self.VaultStoragePath = /storage/FIVEGCOINVault_1
+        self.VaultPublicPath = /public/FIVEGCOINVault_1
+        self.ReceiverPublicPath = /public/FIVEGCOINReceiver_1
+
+        let vault  <-create Vault(balance: 0.0)
+        self.account.storage.save(<-vault, to: self.VaultStoragePath)
+
+        let tokenCap = self.account.capabilities.storage.issue<&FIVEGCOIN.Vault>(self.VaultStoragePath)
+        self.account.capabilities.publish(tokenCap, at: self.ReceiverPublicPath)
+        self.account.capabilities.publish(tokenCap, at: self.VaultPublicPath)
     }
 }

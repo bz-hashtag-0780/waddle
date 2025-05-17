@@ -60,11 +60,32 @@ access(all) contract HotspotOperatorNFT {
         }
 
         access(all) view fun getViews(): [Type] {
-            return []
+            return [
+                Type<MetadataViews.Display>(),
+				Type<MetadataViews.NFTCollectionDisplay>(),
+				Type<MetadataViews.NFTCollectionData>(),
+				Type<MetadataViews.ExternalURL>(),
+				Type<MetadataViews.Traits>(),
+				Type<MetadataViews.Serial>()
+            ]
         }
 
         // resolves the view with the given type for the NFT
         access(all) fun resolveView(_ view: Type): AnyStruct? {
+            switch view {
+                case Type<MetadataViews.Display>():
+                    return MetadataViews.Display(
+                        name: self.metadata.name, 
+                        description: self.metadata.description, 
+                        thumbnail: MetadataViews.HTTPFile(url: self.metadata.thumbnail)
+                        )
+                case Type<MetadataViews.NFTCollectionDisplay>():
+                    let externalURL = MetadataViews.ExternalURL("https://waddle-git-main-basicbeasts.vercel.app/")
+                    let squareImage = MetadataViews.Media(file: MetadataViews.HTTPFile(url: "https://raw.githubusercontent.com/bz-hashtag-0780/waddle/refs/heads/main/images/waddle_logo.png"), mediaType: "image/png")
+                    return nil
+                case Type<MetadataViews.NFTCollectionData>():
+                    return self.metadata
+            }
             return nil
         }
 
@@ -202,8 +223,8 @@ access(all) contract HotspotOperatorNFT {
                 "https://raw.githubusercontent.com/bz-hashtag-0780/waddle/refs/heads/main/images/waddle_operator_6.png"
             ]
         
-        self.CollectionStoragePath = /storage/HotspotOperatorNFTCollection_1
-        self.CollectionPublicPath = /public/HotspotOperatorNFTCollection_1
+        self.CollectionStoragePath = /storage/HotspotOperatorNFTCollection_2
+        self.CollectionPublicPath = /public/HotspotOperatorNFTCollection_2
 
         emit ContractInitialized()
     }
