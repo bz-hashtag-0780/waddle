@@ -119,6 +119,27 @@ Based on dependencies and core functionality:
     - Create automatic uptime reporting simulation
     - Add demo reset functionality for judges
 
+### Phase 3: NFT Collection Refresh Functionality Enhancement
+
+1. **Auto-Refresh After NFT Reveal**
+
+    - Update the NFT minting flow to refresh the collection after reveal
+    - Ensure proper loading state management during the refresh
+    - Add visual feedback for successful minting and collection update
+
+2. **Refresh Collection Button Functionality**
+
+    - Implement handler function for the Refresh Collection button
+    - Connect button to NFT fetching logic
+    - Add loading state management for manual refresh
+    - Provide visual feedback during refresh operation
+
+3. **Testing and Refinement**
+    - Test auto-refresh functionality after minting
+    - Test manual refresh button operation
+    - Verify that both mechanisms correctly update the NFT collection
+    - Optimize refresh logic to avoid redundant operations
+
 ## Current Status / Progress Tracking
 
 We've successfully fixed the Magic Link authentication implementation:
@@ -167,11 +188,26 @@ We've also successfully deployed all smart contracts to the Flow testnet:
     - Successful testing of the NFT minting flow on testnet ✅
 
 5. **NFT Frontend Implementation**:
+
     - Created NFTMinter component that implements the commit + reveal flow ✅
     - Created NFTCollectionViewer component to display owned NFTs ✅
     - Added a dedicated NFTs page to the application ✅
     - Updated authentication context to properly handle user types ✅
     - Integrated NFT components with the Flow blockchain ✅
+
+6. **NFT Display Fix**:
+
+    - Updated the NFT interface to properly handle different ID formats (string, number, object) ✅
+    - Added a helper function to safely display NFT IDs regardless of format ✅
+    - Simplified validation logic to be more permissive with NFT data structures ✅
+    - Added detailed logging to better understand the NFT data flow ✅
+    - Successfully displaying NFTs with various ID formats in the collection viewer ✅
+
+7. **NFT Collection Refresh Enhancement (Planned)**:
+    - Need to implement auto-refresh after successful NFT reveal transaction
+    - Need to implement the Refresh Collection button functionality
+    - Ensure proper loading state management during refresh operations
+    - Add appropriate user feedback during refresh operations
 
 The Magic Link implementation is now fully operational and users can successfully log in using their email. All smart contracts have been deployed to the Flow testnet.
 
@@ -246,7 +282,9 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
 -   [COMPLETED] Fix Magic Link authentication errors ✅
 -   [COMPLETED] Implement dashboard with real FLOW balance display ✅
 -   [COMPLETED] Implement NFT minting interface ✅
--   [IN PROGRESS] Fix NFT collection viewer display issues
+-   [COMPLETED] Fix NFT collection viewer display issues ✅
+-   [PLANNED] Implement auto-refresh after NFT reveal transaction
+-   [PLANNED] Implement Refresh Collection button functionality
 -   [IN PROGRESS] Complete hotspot registration flow
 -   [IN PROGRESS] Finalize network visualization
 
