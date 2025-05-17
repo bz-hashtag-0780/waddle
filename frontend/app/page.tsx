@@ -135,12 +135,6 @@ export default function Home() {
 									Network Map
 								</Link>
 								<Link
-									href="/about"
-									className="font-medium text-gray-500 hover:text-gray-900"
-								>
-									About
-								</Link>
-								<Link
 									href="#features"
 									className="font-medium text-gray-500 hover:text-gray-900"
 								>

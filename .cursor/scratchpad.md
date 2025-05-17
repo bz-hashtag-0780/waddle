@@ -214,12 +214,13 @@ All smart contracts have been successfully deployed to Flow testnet. The fronten
 
 ## High Priority Tasks (Next Steps)
 
-1. **Restore Missing Frontend Files**
+1. **Implement NFT Minting**
 
-    - Recreate the deleted React components (Button, Input, Card, Layout, etc.)
-    - Restore the type definition files that are missing
-    - Recreate the page components for app/login, app/dashboard, app/hotspots/register, etc.
-    - Success criteria: All frontend routes are functional
+    - Write the NFT minting transaction files:
+        - `./flow/cadence/transactions/mintNFTcommit.cdc` - Required for initial NFT commitment
+        - `./flow/cadence/transactions/mintNFTreveal.cdc` - Required for NFT reveal process
+    - Implement the frontend interface for NFT minting
+    - Success criteria: All frontend routes are functional and users can mint NFTs
 
 2. **Implement Real Contract Interactions**
 

@@ -7,7 +7,7 @@ import "NonFungibleToken"
 import "ViewResolver"
 import "MetadataViews"
 import "FIVEGCOIN"
-
+import "RandomPicker"
 access(all) contract HotspotOperatorNFT {
 
     // Events
@@ -23,6 +23,7 @@ access(all) contract HotspotOperatorNFT {
     // Total supply of HotspotOperatorNFTs in existence
     access(all) var totalSupply: UInt64
     access(all) var minters: [Address]
+    access(all) var thumbnails: [String]
 
     // Represents the metadata for a HotspotOperator NFT
     access(all) struct HotspotOperatorData {
@@ -45,7 +46,7 @@ access(all) contract HotspotOperatorNFT {
         access(all) var metadata: HotspotOperatorData
         access(all) var rewardsVault: @FIVEGCOIN.Vault
 
-        init() {
+        init(thumbnail: String) {
 
             let metadata: HotspotOperatorData = HotspotOperatorData(
                 name: "Hotspot Operator",
@@ -162,16 +163,28 @@ access(all) contract HotspotOperatorNFT {
         }
     }
 
-    access(all) fun mintNFT(recipient: &{HotspotOperatorNFTCollectionPublic}) {
-            
-            let newNFT: @HotspotOperatorNFT.NFT <- create NFT()
-
-            recipient.deposit(token: <-newNFT)
-
-            HotspotOperatorNFT.totalSupply = HotspotOperatorNFT.totalSupply + 1
-
-            emit Minted(id: HotspotOperatorNFT.totalSupply - 1, recipient: recipient.owner?.address)
+    access(all) fun mintNFTCommit(): @RandomPicker.Receipt {
+        var values: [UInt64] = []
+        var i: UInt64 = 0
+        while i < UInt64(HotspotOperatorNFT.thumbnails.length) {
+            values.append(i)
+            i = i + 1
         }
+        return <-RandomPicker.commit(values: values)
+    }
+
+    access(all) fun mintNFTReveal(recipient: &{HotspotOperatorNFTCollectionPublic}, receipt: @RandomPicker.Receipt) {
+        
+        let randomIndex: UInt64 = RandomPicker.reveal(receipt: <-receipt)
+            
+        let newNFT: @HotspotOperatorNFT.NFT <- create NFT(thumbnail: HotspotOperatorNFT.thumbnails[randomIndex])
+
+        recipient.deposit(token: <-newNFT)
+
+        HotspotOperatorNFT.totalSupply = HotspotOperatorNFT.totalSupply + 1
+
+        emit Minted(id: HotspotOperatorNFT.totalSupply - 1, recipient: recipient.owner?.address)
+    }
 
     access(all) fun createEmptyCollection(nftType: Type): @{NonFungibleToken.Collection} {
         return <- create Collection()
@@ -180,6 +193,14 @@ access(all) contract HotspotOperatorNFT {
     init() {
         self.totalSupply = 0
         self.minters = []
+        self.thumbnails = [
+                "https://raw.githubusercontent.com/bz-hashtag-0780/waddle/refs/heads/main/images/waddle_operator_1.png",
+                "https://raw.githubusercontent.com/bz-hashtag-0780/waddle/refs/heads/main/images/waddle_operator_2.png",
+                "https://raw.githubusercontent.com/bz-hashtag-0780/waddle/refs/heads/main/images/waddle_operator_3.png",
+                "https://raw.githubusercontent.com/bz-hashtag-0780/waddle/refs/heads/main/images/waddle_operator_4.png",
+                "https://raw.githubusercontent.com/bz-hashtag-0780/waddle/refs/heads/main/images/waddle_operator_5.png",
+                "https://raw.githubusercontent.com/bz-hashtag-0780/waddle/refs/heads/main/images/waddle_operator_6.png"
+            ]
         
         self.CollectionStoragePath = /storage/HotspotOperatorNFTCollection_1
         self.CollectionPublicPath = /public/HotspotOperatorNFTCollection_1

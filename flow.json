@@ -9,29 +9,58 @@
 		"HotspotOperatorNFT": {
 			"source": "./flow/cadence/contracts/HotspotOperatorNFT.cdc",
 			"aliases": {
-				"testing": "0000000000000007",
-				"testnet": "0x010f2d483a538e7e"
+				"testing": "0000000000000007"
 			}
 		},
 		"HotspotRegistry": {
 			"source": "./flow/cadence/contracts/HotspotRegistry.cdc",
 			"aliases": {
-				"testing": "0000000000000007",
-				"testnet": "0x010f2d483a538e7e"
+				"testing": "0000000000000007"
 			}
 		},
 		"UptimeProof": {
 			"source": "./flow/cadence/contracts/UptimeProof.cdc",
 			"aliases": {
-				"testing": "0000000000000007",
-				"testnet": "0x010f2d483a538e7e"
+				"testing": "0000000000000007"
 			}
 		},
 		"FIVEGCOIN": {
 			"source": "./flow/cadence/contracts/FIVEGCOIN.cdc",
 			"aliases": {
+				"testing": "0000000000000007"
+			}
+		},
+		"RandomPicker": {
+			"source": "./flow/cadence/contracts/RandomPicker.cdc",
+			"aliases": {
+				"mainnet": "85ba07db77467695"
+			}
+		},
+		"CoinToss": {
+			"source": "./flow/cadence/contracts/CoinToss.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
 				"testing": "0000000000000007",
-				"testnet": "0x010f2d483a538e7e"
+				"testnet": "b6c99d7ff216a684"
+			}
+		},
+		"RandomConsumer": {
+			"source": "./flow/cadence/contracts/RandomConsumer.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "45caec600164c9e6",
+				"testing": "0000000000000007",
+				"testnet": "ed24dbe901028c5c"
+			}
+		},
+		"RandomResultStorage": "./contracts/test/RandomResultStorage.cdc",
+		"Xorshift128plus": {
+			"source": "./flow/cadence/contracts/Xorshift128plus.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "45caec600164c9e6",
+				"testing": "0000000000000007",
+				"testnet": "ed24dbe901028c5c"
 			}
 		}
 	},
@@ -169,7 +198,7 @@
 			}
 		},
 		"testnet-account": {
-			"address": "0x010f2d483a538e7e",
+			"address": "0x2f52190177ec174b",
 			"key": {
 				"type": "file",
 				"location": "testnet-account.pkey"
@@ -179,8 +208,9 @@
 	"deployments": {
 		"testnet": {
 			"testnet-account": [
-				"HotspotOperatorNFT",
+				"RandomPicker",
 				"FIVEGCOIN",
+				"HotspotOperatorNFT",
 				"HotspotRegistry",
 				"UptimeProof"
 			]
