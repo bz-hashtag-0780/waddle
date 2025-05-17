@@ -70,6 +70,148 @@
 				"mainnet": "0x1d7e57aa55817448",
 				"testnet": "0x631e88ae7f1d7c20"
 			}
+		},
+		"CapabilityDelegator": {
+			"source": "./flow/cadence/contracts/CapabilityDelegator.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"CapabilityFactory": {
+			"source": "./flow/cadence/contracts/CapabilityFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"CapabilityFilter": {
+			"source": "./flow/cadence/contracts/CapabilityFilter.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"ExampleNFT": {
+			"source": "./flow/cadence/contracts/standard/ExampleNFT.cdc",
+			"aliases": {
+				"testing": "0000000000000007"
+			}
+		},
+		"ExampleNFT2": {
+			"source": "./flow/cadence/contracts/standard/ExampleNFT2.cdc",
+			"aliases": {
+				"testing": "0000000000000007"
+			}
+		},
+		"ExampleToken": {
+			"source": "./flow/cadence/contracts/standard/ExampleToken.cdc",
+			"aliases": {
+				"testing": "0000000000000007"
+			}
+		},
+		"FTAllFactory": {
+			"source": "./flow/cadence/contracts/factories/FTAllFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTBalanceFactory": {
+			"source": "./flow/cadence/contracts/factories/FTBalanceFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTProviderFactory": {
+			"source": "./flow/cadence/contracts/factories/FTProviderFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTReceiverBalanceFactory": {
+			"source": "./flow/cadence/contracts/factories/FTReceiverBalanceFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTReceiverFactory": {
+			"source": "./flow/cadence/contracts/factories/FTReceiverFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"FTVaultFactory": {
+			"source": "./flow/cadence/contracts/factories/FTVaultFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"HybridCustody": {
+			"source": "./flow/cadence/contracts/HybridCustody.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"NFTCollectionFactory": {
+			"source": "./flow/cadence/contracts/factories/NFTCollectionFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"NFTCollectionPublicFactory": {
+			"source": "./flow/cadence/contracts/factories/NFTCollectionPublicFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"NFTProviderAndCollectionFactory": {
+			"source": "./flow/cadence/contracts/factories/NFTProviderAndCollectionFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"NFTProviderFactory": {
+			"source": "./flow/cadence/contracts/factories/NFTProviderFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
 		}
 	},
 	"dependencies": {
