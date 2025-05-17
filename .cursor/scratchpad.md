@@ -155,9 +155,15 @@ We've also successfully deployed all smart contracts to the Flow testnet:
     - Added FCL configuration to app layout ✅
 
 3. **FLOW Balance Implementation**:
+
     - Fixed the `getFlowBalance` function to handle actual Flow blockchain balances ✅
     - Updated the function to handle both string and number balance values from FCL's API ✅
     - Successfully displaying real FLOW token balances in the dashboard ✅
+
+4. **NFT Minting Transaction Implementation**:
+    - Created transaction for NFT minting (commit) process ✅
+    - Created transaction for NFT revealing process ✅
+    - Successful testing of the NFT minting flow on testnet ✅
 
 The Magic Link implementation is now fully operational and users can successfully log in using their email. All smart contracts have been deployed to the Flow testnet.
 
@@ -181,6 +187,8 @@ The authentication is now fully operational! Users can log in with their email u
 
 All smart contracts have been successfully deployed to Flow testnet. The frontend has been configured to interact with these contracts via FCL.
 
+We've completed the NFT minting transaction implementation with both commit and reveal transactions. This two-step process provides better security for the NFT minting.
+
 ## Project Status Board
 
 ### Smart Contracts
@@ -190,6 +198,7 @@ All smart contracts have been successfully deployed to Flow testnet. The fronten
 -   [COMPLETED] Uptime proof submission system ✅
 -   [COMPLETED] Reward token contract (FIVEGCOIN) ✅
 -   [COMPLETED] Deploy all contracts to testnet ✅
+-   [COMPLETED] NFT minting transactions (commit & reveal) ✅
 
 ### Frontend (Current Progress)
 
@@ -202,11 +211,14 @@ All smart contracts have been successfully deployed to Flow testnet. The fronten
 -   [COMPLETED] Implement dashboard with real FLOW balance display ✅
 -   [IN PROGRESS] Complete hotspot registration flow
 -   [IN PROGRESS] Finalize network visualization
+-   [TO DO] Implement NFT minting interface
+-   [TO DO] Implement NFT collection viewer
 
 ### Integration & Deployment
 
 -   [COMPLETED] Fix TypeScript type definitions ✅
 -   [COMPLETED] Contract deployment to testnet ✅
+-   [COMPLETED] NFT transaction implementation ✅
 -   [IN PROGRESS] Frontend-contract integration
 -   [ ] Hosting setup (Vercel)
 -   [ ] Final testing and bug fixes
@@ -214,36 +226,45 @@ All smart contracts have been successfully deployed to Flow testnet. The fronten
 
 ## High Priority Tasks (Next Steps)
 
-1. **Implement NFT Minting**
+1. **Implement NFT Minting Frontend Interface**
 
-    - Write the NFT minting transaction files:
-        - `./flow/cadence/transactions/mintNFTcommit.cdc` - Required for initial NFT commitment
-        - `./flow/cadence/transactions/mintNFTreveal.cdc` - Required for NFT reveal process
-    - Implement the frontend interface for NFT minting
-    - Success criteria: All frontend routes are functional and users can mint NFTs
+    - Create frontend components for the NFT minting process
+        - Design UI for the NFT minting form
+        - Implement commit transaction through FCL
+        - Implement reveal transaction through FCL
+        - Add loading and success states for transactions
+    - Success criteria: Users can mint NFTs through the UI with commit and reveal process
 
-2. **Implement Real Contract Interactions**
+2. **Implement NFT Collection Viewer**
+
+    - Create a component to display user's NFT collection
+    - Fetch NFTs owned by the user from the HotspotOperatorNFT contract
+    - Display NFT metadata and images
+    - Add functionality to view NFT details
+    - Success criteria: Users can view all their owned NFTs in a gallery format
+
+3. **Implement Real Contract Interactions**
 
     - Update the flow.ts service to use real contract calls instead of simulation mode
     - Create transaction scripts for hotspot registration
     - Implement real uptime proof submission
     - Success criteria: Frontend can mint NFTs, register hotspots, and submit uptime proofs on testnet
 
-3. **Create Demo Mode for Judges**
+4. **Create Demo Mode for Judges**
 
     - Build a UI component for triggering demo actions
     - Add simulation controls for quick testing
     - Implement visualizations to demonstrate the system working
     - Success criteria: Judges can easily test the complete flow in a predictable way
 
-4. **Deploy Frontend to Vercel**
+5. **Deploy Frontend to Vercel**
 
     - Set up a Vercel project for the frontend
     - Configure environment variables for production
     - Deploy the application
     - Success criteria: Application is accessible online via a public URL
 
-5. **Create Documentation**
+6. **Create Documentation**
 
     - Write a detailed README with project overview
     - Add instructions for local development
