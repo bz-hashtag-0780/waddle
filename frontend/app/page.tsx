@@ -95,9 +95,16 @@ export default function Home() {
 								<div className="flex w-full items-center justify-between md:w-auto">
 									<Link
 										href="/"
-										className="text-2xl font-bold text-[rgb(117,206,254)]"
+										className="flex items-center"
 									>
-										Waddle $5G
+										<img
+											src="/waddle_logo.png"
+											alt="Waddle Logo"
+											className="h-8 w-8 mr-2 rounded-lg"
+										/>
+										<span className="text-2xl font-bold text-[rgb(117,206,254)]">
+											Waddle $5G
+										</span>
 									</Link>
 									<div className="-mr-2 flex items-center md:hidden">
 										<button
