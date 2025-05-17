@@ -3,123 +3,105 @@
 // This contract implements a fungible token that will be used
 // to reward hotspot operators for providing 5G network coverage.
 
-access(all) contract FIVEGCOIN {
+import "FungibleToken"
+import "MetadataViews"
+import "FungibleTokenMetadataViews"
 
-    // Events
-    access(all) event TokensInitialized(initialSupply: UFix64)
+access(all) contract FIVEGCOIN: FungibleToken {
+
     access(all) event TokensWithdrawn(amount: UFix64, from: Address?)
     access(all) event TokensDeposited(amount: UFix64, to: Address?)
-    access(all) event TokensMinted(amount: UFix64, to: Address?)
-    access(all) event TokensBurned(amount: UFix64, from: Address?)
-    access(all) event MinterCreated(minterAddress: Address?)
-    access(all) event BurnerCreated(burnerAddress: Address?)
-    access(all) event ContractInitialized()
+    access(all) event TokensMinted(amount: UFix64)
 
-    // Total supply of tokens in existence
     access(all) var totalSupply: UFix64
+    access(all) resource Vault: FungibleToken.Vault {
 
-    // Vault resource that holds the tokens
-    access(all) resource Vault {
-        // The token balance
         access(all) var balance: UFix64
 
-        // Initialize the balance at resource creation time
         init(balance: UFix64) {
             self.balance = balance
         }
 
-        // Withdraw tokens from the vault
-        access(all) fun withdraw(amount: UFix64): @Vault {
+        access(contract) fun burnCallback() {
+            if self.balance > 0.0 {
+                FIVEGCOIN.totalSupply = FIVEGCOIN.totalSupply - self.balance
+            }
+            self.balance = 0.0
+        }
+
+        access(all) view fun getSupportedVaultTypes(): {Type: Bool} {
+            return {self.getType(): true}
+        }
+
+        access(all) view fun isSupportedVaultType(type: Type): Bool {
+            if (type == self.getType()) { return true } else { return false }
+        }
+
+        access(all) view fun isAvailableToWithdraw(amount: UFix64): Bool {
+            return amount <= self.balance
+        }
+
+        access(FungibleToken.Withdraw) fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
             self.balance = self.balance - amount
-            emit TokensWithdrawn(amount: amount, from: self.owner?.address)
+
+            if let address = self.owner?.address {
+                    emit TokensWithdrawn(amount: amount, from: address)
+            } else {
+                emit TokensWithdrawn(amount: amount, from: nil)
+            }
             return <-create Vault(balance: amount)
         }
 
-        // Deposit tokens into the vault
-        access(all) fun deposit(from: @Vault) {
-            let amount = from.balance
-            self.balance = self.balance + amount
-            emit TokensDeposited(amount: amount, to: self.owner?.address)
-            destroy from
+        access(all) fun deposit(from: @{FungibleToken.Vault}) {
+            let vault <- from as! @FIVEGCOIN.Vault
+            self.balance = self.balance + vault.balance
+
+            if let address = self.owner?.address {
+                emit TokensDeposited(amount: vault.balance, to: address)
+            } else {
+                emit TokensDeposited(amount: vault.balance, to: nil)
+            }
+            vault.balance = 0.0
+            destroy vault
+        }
+
+        access(all) view fun getViews(): [Type]{
+            return []
+        }
+
+        access(all) fun resolveView(_ view: Type): AnyStruct? {
+            return nil
+        }
+
+        access(all) fun createEmptyVault(): @{FungibleToken.Vault} {
+            return <-create Vault(balance: 0.0)
         }
     }
 
-    // Public interface to the Vault
-    access(all) resource interface Provider {
-        access(all) fun withdraw(amount: UFix64): @Vault
-        access(all) view fun getBalance(): UFix64
-    }
-
-    access(all) resource interface Receiver {
-        access(all) fun deposit(from: @Vault)
-    }
-
-    access(all) resource interface Balance {
-        access(all) view fun getBalance(): UFix64
-    }
-
-    // Create an empty vault that can store tokens
-    access(all) fun createEmptyVault(): @Vault {
+    access(all) fun createEmptyVault(vaultType: Type): @FIVEGCOIN.Vault {
         return <-create Vault(balance: 0.0)
     }
 
-    // Resource that allows authorized users to mint new tokens
-    access(all) resource Minter {
-        // Mint new tokens and deposit into a Vault
-        access(all) fun mintTokens(amount: UFix64, recipient: &{Receiver}) {
-            pre {
-                amount > 0.0: "Amount minted must be greater than zero"
-            }
-            FIVEGCOIN.totalSupply = FIVEGCOIN.totalSupply + amount
-            emit TokensMinted(amount: amount, to: recipient.owner?.address)
-            recipient.deposit(from: <-create Vault(balance: amount))
-        }
+    /// Gets a list of the metadata views that this contract supports
+    access(all) view fun getContractViews(resourceType: Type?): [Type] {
+        return []
     }
 
-    // Resource that allows authorized users to burn tokens
-    access(all) resource Burner {
-        // Burn tokens from a Vault
-        access(all) fun burnTokens(from: @Vault) {
-            let amount = from.balance
-            FIVEGCOIN.totalSupply = FIVEGCOIN.totalSupply - amount
-            emit TokensBurned(amount: amount, from: from.owner?.address)
-            destroy from
-        }
+    access(all) fun resolveContractView(resourceType: Type?, viewType: Type): AnyStruct? {
+        return nil
     }
 
-    // Paths for storing resources
-    access(all) let VaultStoragePath: StoragePath
-    access(all) let VaultReceiverPath: PublicPath
-    access(all) let VaultBalancePath: PublicPath
-    access(all) let VaultProviderPath: PrivatePath
-    access(all) let MinterStoragePath: StoragePath
-    access(all) let BurnerStoragePath: StoragePath
+    access(account) fun mintTokens(amount: UFix64): @FIVEGCOIN.Vault {
+        pre {
+            amount > 0.0: "Amount minted must be greater than zero"
+        }
+        FIVEGCOIN.totalSupply = FIVEGCOIN.totalSupply + amount
+
+        emit TokensMinted(amount: amount)
+        return <-create Vault(balance: amount)
+    }
 
     init() {
         self.totalSupply = 0.0
-
-        // Set the named paths
-        self.VaultStoragePath = /storage/RewardTokenVault
-        self.VaultReceiverPath = /public/RewardTokenReceiver
-        self.VaultBalancePath = /public/RewardTokenBalance
-        self.VaultProviderPath = /private/RewardTokenProvider
-        self.MinterStoragePath = /storage/RewardTokenMinter
-        self.BurnerStoragePath = /storage/RewardTokenBurner
-
-        // Create the Minter resource and save it in storage
-        let minter <- create Minter()
-        self.account.storage.save(<-minter, to: self.MinterStoragePath)
-        emit MinterCreated(minterAddress: self.account.address)
-
-        // Create the Burner resource and save it in storage
-        let burner <- create Burner()
-        self.account.storage.save(<-burner, to: self.BurnerStoragePath)
-        emit BurnerCreated(burnerAddress: self.account.address)
-
-        // Create an empty Vault for the deployer
-        let vault <- self.createEmptyVault()
-        self.account.storage.save(<-vault, to: self.VaultStoragePath)
-
-        emit ContractInitialized()
     }
-} 
+}

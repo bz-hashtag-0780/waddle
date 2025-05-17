@@ -6,6 +6,7 @@
 import "NonFungibleToken"
 import "ViewResolver"
 import "MetadataViews"
+import "FIVEGCOIN"
 
 access(all) contract HotspotOperatorNFT {
 
@@ -21,12 +22,13 @@ access(all) contract HotspotOperatorNFT {
 
     // Total supply of HotspotOperatorNFTs in existence
     access(all) var totalSupply: UInt64
+    access(all) var minters: [Address]
 
     // Represents the metadata for a HotspotOperator NFT
     access(all) struct HotspotOperatorData {
         access(all) let name: String
         access(all) let description: String
-        access(all) let thumbnail: String // Could be a URL to an image
+        access(all) let thumbnail: String
         access(all) let createdAt: UFix64
 
         init(name: String, description: String, thumbnail: String) {
@@ -40,16 +42,24 @@ access(all) contract HotspotOperatorNFT {
     // The NFT resource that represents ownership rights to a hotspot
     access(all) resource NFT: NonFungibleToken.NFT {
         access(all) let id: UInt64
-        access(all) let metadata: HotspotOperatorData
+        access(all) var metadata: HotspotOperatorData
+        access(all) var rewardsVault: @FIVEGCOIN.Vault
 
-        init(metadata: HotspotOperatorData) {
+        init() {
+
+            let metadata: HotspotOperatorData = HotspotOperatorData(
+                name: "Hotspot Operator",
+                description: "A 🎶 smooth operator 🎶 that represents ownership rights to a hotspot",
+                thumbnail: "https://example.com/thumbnail.png"
+            )
+
             self.id = self.uuid
             self.metadata = metadata
+            self.rewardsVault <- FIVEGCOIN.createEmptyVault(vaultType: Type<@FIVEGCOIN.Vault>())
         }
 
         access(all) view fun getViews(): [Type] {
-            return [
-            ]
+            return []
         }
 
         // resolves the view with the given type for the NFT
@@ -152,28 +162,12 @@ access(all) contract HotspotOperatorNFT {
         }
     }
 
-    access(all) fun mintNFT(
-            recipient: &{HotspotOperatorNFTCollectionPublic},
-            name: String,
-            description: String,
-            thumbnail: String
-        ) {
-            // Create new metadata
-            let metadata = HotspotOperatorData(
-                name: name,
-                description: description,
-                thumbnail: thumbnail
-            )
+    access(all) fun mintNFT(recipient: &{HotspotOperatorNFTCollectionPublic}) {
+            
+            let newNFT: @HotspotOperatorNFT.NFT <- create NFT()
 
-            // Create the NFT
-            let newNFT <- create NFT(
-                metadata: metadata
-            )
-
-            // Deposit it in the recipient's account
             recipient.deposit(token: <-newNFT)
 
-            // Increment the total supply counter
             HotspotOperatorNFT.totalSupply = HotspotOperatorNFT.totalSupply + 1
 
             emit Minted(id: HotspotOperatorNFT.totalSupply - 1, recipient: recipient.owner?.address)
@@ -184,10 +178,9 @@ access(all) contract HotspotOperatorNFT {
     }
 
     init() {
-        // Initialize total supply
         self.totalSupply = 0
+        self.minters = []
         
-        // Set named paths
         self.CollectionStoragePath = /storage/HotspotOperatorNFTCollection_1
         self.CollectionPublicPath = /public/HotspotOperatorNFTCollection_1
 
