@@ -20,6 +20,7 @@ fcl.config()
 	.put('0xNonFungibleToken', '0x1d7e57aa55817448')
 	.put('0xNFTCollectionPublicFactory', '0xd8a7e05a7ac670c0')
 	.put('0xNFTProviderAndCollectionFactory', '0xd8a7e05a7ac670c0')
-	.put('0xNFTProviderFactory', '0xd8a7e05a7ac670c0');
+	.put('0xNFTProviderFactory', '0xd8a7e05a7ac670c0')
+	.put('0xRandomPicker', '0x85ba07db77467695');
 
 export default fcl;
