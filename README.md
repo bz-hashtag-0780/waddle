@@ -44,10 +44,10 @@ Waddle is a decentralized 5G network platform built on the Flow. It addresses th
 ## Architecture
 
 ```
-┌────────────────────┐    ┌───────────────────────┐    ┌───────────────┐
+┌────────────────────┐    ┌───────────────────────┐    ┌────────────────┐
 │   Dashboard Site   │    │   Flow Blockchain     │    │  Admin Backend │
 │   (Frontend)       │◄───┤   (Smart Contracts)   │◄───┤  (Simulated)   │
-└────────────────────┘    └───────────────────────┘    └───────────────┘
+└────────────────────┘    └───────────────────────┘    └────────────────┘
         │                           │
         │                           │
         ▼                           ▼
