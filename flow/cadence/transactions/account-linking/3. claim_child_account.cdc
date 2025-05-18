@@ -6,10 +6,21 @@ import "CapabilityFilter"
 
 transaction(childAddress: Address) {
     prepare(acct: auth(Storage, Capabilities, Inbox) &Account) {
-        var filter = getAccount(childAddress).capabilities.get<&{CapabilityFilter.Filter}>(PublicPath(identifier: "CapFilter_".concat(acct.address.toString()))!)
+        // var filter = getAccount(childAddress).capabilities.get<&{CapabilityFilter.Filter}>(PublicPath(identifier: "CapFilter_".concat(acct.address.toString()))!)
+
+        if acct.storage.borrow<&CapabilityFilter.AllowAllFilter>(from: CapabilityFilter.StoragePath) == nil {
+            acct.storage.save(<- CapabilityFilter.createFilter(Type<@CapabilityFilter.AllowAllFilter>()), to: CapabilityFilter.StoragePath)
+        }
+
+        acct.capabilities.unpublish(CapabilityFilter.PublicPath)
+        acct.capabilities.publish(
+            acct.capabilities.storage.issue<&{CapabilityFilter.Filter}>(CapabilityFilter.StoragePath), at: CapabilityFilter.PublicPath)
+
+        let linkRes = acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+        assert(linkRes.check(), message: "failed to setup filter")
 
         if acct.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
-            let m <- HybridCustody.createManager(filter: filter)
+            let m <- HybridCustody.createManager(filter: linkRes)
             acct.storage.save(<- m, to: HybridCustody.ManagerStoragePath)
 
             for c in acct.capabilities.storage.getControllers(forPath: HybridCustody.ManagerStoragePath) {
