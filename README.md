@@ -8,8 +8,8 @@
 
 **Contract Addresses:**
 
--   Testnet: 0xcc6a3536f37381a2
--   Mainnet: 0xefc9bea2fda54f34
+-   Testnet: [0xcc6a3536f37381a2](https://testnet.flowscan.io/account/cc6a3536f37381a2)
+-   Mainnet: [0xefc9bea2fda54f34](https://www.flowscan.io/account/0xefc9bea2fda54f34)
 
 **Video Demonstration:** [Watch the Demo Video](https://drive.google.com/drive/folders/1E4zo8F2FCT4-d2DvjQthgoMHA7yh_Qpd?usp=sharing)
 
