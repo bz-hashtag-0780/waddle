@@ -2,8 +2,8 @@
 export interface Hotspot {
 	id: number;
 	owner: string;
-	lat: number;
-	lng: number;
+	lat: number | null;
+	lng: number | null;
 	online: boolean;
 	lastUpdated: number;
 	totalUptime: number;

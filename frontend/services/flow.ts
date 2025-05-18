@@ -366,42 +366,102 @@ export const submitUptimeProof = async (
 	}
 };
 
-// Get all registered hotspots (simulation mode)
+// Get all registered hotspots
 export const getAllHotspots = async (): Promise<Hotspot[]> => {
 	try {
-		// For simulation, return mock data
-		return [
-			{
-				id: 1,
-				owner: '0x01',
-				lat: 37.7749,
-				lng: -122.4194,
-				online: true,
-				lastUpdated: Date.now(),
-				totalUptime: 3600, // 1 hour in seconds
-			},
-			{
-				id: 2,
-				owner: '0x02',
-				lat: 40.7128,
-				lng: -74.006,
+		console.log('Fetching all hotspots from the blockchain...');
+
+		// Call the actual script to get hotspots from the blockchain
+		const result = await fcl.query({
+			cadence: `
+				import HotspotRegistry from 0xcc6a3536f37381a2      
+
+				access(all) fun main(): [HotspotRegistry.Hotspot] {
+					return HotspotRegistry.getAllHotspots()
+				}
+			`,
+		});
+
+		console.log(
+			'Received raw hotspot data from blockchain:',
+			JSON.stringify(result)
+		);
+
+		if (!result || !Array.isArray(result)) {
+			console.error('Unexpected response format:', result);
+			return [];
+		}
+
+		if (result.length === 0) {
+			console.log('No hotspots found in registry');
+			return [];
+		}
+
+		// Log data structure of first item to help with debugging
+		const firstItem = result[0];
+		console.log('First hotspot data structure:', JSON.stringify(firstItem));
+
+		// Transform the returned data into the Hotspot format
+		const mappedHotspots = result.map((hotspotData: any, index) => {
+			console.log(
+				`Processing hotspot ${index}:`,
+				JSON.stringify(hotspotData)
+			);
+
+			// Check if the data is already in the format we expect
+			if (hotspotData.id !== undefined) {
+				console.log(`Hotspot ${index} has direct properties`);
+				return {
+					id: Number(hotspotData.id),
+					owner: hotspotData.owner,
+					lat: hotspotData.lat ? parseFloat(hotspotData.lat) : null,
+					lng: hotspotData.lng ? parseFloat(hotspotData.lng) : null,
+					online: hotspotData.online,
+					lastUpdated: parseFloat(hotspotData.lastUpdated),
+					totalUptime: parseFloat(hotspotData.totalUptime),
+				};
+			}
+
+			// If it's wrapped in a "HotspotRegistry.Hotspot" property
+			if (hotspotData['HotspotRegistry.Hotspot']) {
+				console.log(
+					`Hotspot ${index} is wrapped in HotspotRegistry.Hotspot`
+				);
+				const hotspot = hotspotData['HotspotRegistry.Hotspot'];
+				return {
+					id: Number(hotspot.id),
+					owner: hotspot.owner,
+					lat: hotspot.lat ? parseFloat(hotspot.lat) : null,
+					lng: hotspot.lng ? parseFloat(hotspot.lng) : null,
+					online: hotspot.online,
+					lastUpdated: parseFloat(hotspot.lastUpdated),
+					totalUptime: parseFloat(hotspot.totalUptime),
+				};
+			}
+
+			// If we can't figure out the format, log an error and return a placeholder
+			console.error(
+				`Unexpected format for hotspot ${index}:`,
+				hotspotData
+			);
+			return {
+				id: index,
+				owner: 'unknown',
+				lat: null,
+				lng: null,
 				online: false,
-				lastUpdated: Date.now() - 3600000, // 1 hour ago
-				totalUptime: 7200, // 2 hours in seconds
-			},
-			{
-				id: 3,
-				owner: '0x03',
-				lat: 34.0522,
-				lng: -118.2437,
-				online: true,
-				lastUpdated: Date.now(),
-				totalUptime: 1800, // 30 minutes in seconds
-			},
-		];
+				lastUpdated: 0,
+				totalUptime: 0,
+			};
+		});
+
+		console.log('Successfully processed hotspots:', mappedHotspots.length);
+		return mappedHotspots;
 	} catch (error) {
 		console.error('Error getting all hotspots:', error);
-		throw error;
+
+		// Return empty array on error
+		return [];
 	}
 };
 
