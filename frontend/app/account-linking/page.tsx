@@ -140,10 +140,10 @@ transaction {
         }
 
         acct.capabilities.storage.issue<&{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath)
-        acct.capabilities.publish(
-            acct.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath),
-            at: HybridCustody.OwnedAccountPublicPath
-        )
+        // acct.capabilities.publish(
+        //     acct.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath),
+        //     at: HybridCustody.OwnedAccountPublicPath
+        // )
     }
 }
 					`,
@@ -217,6 +217,9 @@ transaction {
 					import CapabilityDelegator from 0xCapabilityDelegator
 					import HotspotOperatorNFT from 0xHotspotOperatorNFT
 					import NonFungibleToken from 0xNonFungibleToken
+					import NFTCollectionPublicFactory from 0xNFTCollectionPublicFactory
+					import NFTProviderAndCollectionFactory from 0xNFTProviderAndCollectionFactory
+					import NFTProviderFactory from 0xNFTProviderFactory
 
 access(all) fun createCapIfNotExists(_ acct: auth(StorageCapabilities) &Account, forPath: StoragePath) {
     var capExists = false
@@ -262,6 +265,15 @@ transaction(parent: Address) {
         let factory = acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
         assert(factory.check(), message: "factory not set up")
 
+        // Flow wallet inaccessible - try fixing
+        let manager = acct.storage.borrow<auth(CapabilityFactory.Add) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
+            ?? panic("manager not found")
+        
+        manager.addFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
+        manager.addFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
+        manager.addFactory(Type<&{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
+
+
         // Use a unique per-parent filter path
         let filterStoragePath = StoragePath(identifier: "CapFilter_".concat(parent.toString()))!
         let filterPublicPath = PublicPath(identifier: "CapFilter_".concat(parent.toString()))!
@@ -296,6 +308,7 @@ transaction(parent: Address) {
         owned.publishToParent(parentAddress: parent, factory: factory, filter: filterCap)
     }
 }
+
 
 
 								`,

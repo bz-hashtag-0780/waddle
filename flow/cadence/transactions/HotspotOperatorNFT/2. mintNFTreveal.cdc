@@ -19,7 +19,7 @@ transaction {
             
             acct.storage.save(<-collection, to: HotspotOperatorNFT.CollectionStoragePath)
             
-            let collectionCap = acct.capabilities.storage.issue<&HotspotOperatorNFT.Collection>(HotspotOperatorNFT.CollectionStoragePath)
+            let collectionCap: Capability<&HotspotOperatorNFT.Collection> = acct.capabilities.storage.issue<&HotspotOperatorNFT.Collection>(HotspotOperatorNFT.CollectionStoragePath)
 
             acct.capabilities.publish(collectionCap, at: HotspotOperatorNFT.CollectionPublicPath)
         }

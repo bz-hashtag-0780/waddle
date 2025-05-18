@@ -4,6 +4,9 @@ import "CapabilityFilter"
 import "CapabilityDelegator"
 import "HotspotOperatorNFT"
 import "NonFungibleToken"
+import "NFTCollectionPublicFactory"
+import "NFTProviderAndCollectionFactory"
+import "NFTProviderFactory"
 
 access(all) fun createCapIfNotExists(_ acct: auth(StorageCapabilities) &Account, forPath: StoragePath) {
     var capExists = false
@@ -48,6 +51,15 @@ transaction(parent: Address) {
 
         let factory = acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
         assert(factory.check(), message: "factory not set up")
+
+        // Flow wallet inaccessible - try fixing
+        let manager = acct.storage.borrow<auth(CapabilityFactory.Add) &CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath)
+            ?? panic("manager not found")
+        
+        manager.addFactory(Type<&{NonFungibleToken.CollectionPublic}>(), NFTCollectionPublicFactory.Factory())
+        manager.addFactory(Type<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(), NFTProviderAndCollectionFactory.Factory())
+        manager.addFactory(Type<&{NonFungibleToken.Provider}>(), NFTProviderFactory.Factory())
+
 
         // Use a unique per-parent filter path
         let filterStoragePath = StoragePath(identifier: "CapFilter_".concat(parent.toString()))!

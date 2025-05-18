@@ -16,6 +16,10 @@ access(all) contract HotspotRegistry {
     // Named paths
     access(all) let AdminStoragePath: StoragePath
 
+    // Registry of all hotspots
+    // Hotspot ID -> Hotspot Struct
+    access(all) var hotspots: {UInt64: Hotspot}
+
     // Represents a 5G hotspot in the network
     access(all) struct Hotspot {
         access(all) let id: UInt64
@@ -56,10 +60,6 @@ access(all) contract HotspotRegistry {
             self.totalUptime = self.totalUptime + amount
         }
     }
-
-    // Registry of all hotspots
-    // Hotspot ID -> Hotspot Struct
-    access(all) var hotspots: {UInt64: Hotspot}
 
     // Register a new hotspot
     access(all) fun registerHotspot(owner: Address, hotspotOperatorNFT: @HotspotOperatorNFT.NFT): @HotspotOperatorNFT.NFT {

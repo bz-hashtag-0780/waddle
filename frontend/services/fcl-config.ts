@@ -16,6 +16,9 @@ fcl.config()
 	.put('0xCapabilityFactory', '0x294e44e1ec6993c6')
 	.put('0xCapabilityFilter', '0x294e44e1ec6993c6')
 	.put('0xCapabilityDelegator', '0x294e44e1ec6993c6')
-	.put('0xNonFungibleToken', '0x631e88ae7f1d7c20');
+	.put('0xNonFungibleToken', '0x631e88ae7f1d7c20')
+	.put('0xNFTCollectionPublicFactory', '0x294e44e1ec6993c6')
+	.put('0xNFTProviderAndCollectionFactory', '0x294e44e1ec6993c6')
+	.put('0xNFTProviderFactory', '0x294e44e1ec6993c6');
 
 export default fcl;
