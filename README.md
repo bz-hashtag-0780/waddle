@@ -102,7 +102,7 @@ This project leveraged AI-assisted development techniques to accelerate implemen
     - UI/UX enhancement recommendations
     - Documentation generation and improvement
 
-AI tools were particularly valuable for rapidly prototyping Flow blockchain interactions, where specialized Cadence knowledge was required for features like nested resources, secure randomness implementation, and account linking.
+AI tools were particularly valuable for rapidly prototyping frontend.
 
 ## Getting Started
 
