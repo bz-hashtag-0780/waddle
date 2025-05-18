@@ -22,6 +22,10 @@ async function processHotspotsLocations() {
 app.listen(PORT, async () => {
 	console.log(`Server is running on port ${PORT}`);
 	// await flowService.addKeys(500);
-
 	await processHotspotsLocations();
+	// await flowService.updateHotspotLocation(
+	// 	'27487790823746',
+	// 	'49.246292',
+	// 	'123.116226'
+	// );
 });

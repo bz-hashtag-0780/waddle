@@ -131,7 +131,7 @@ access(all) fun main(): [HotspotRegistry.Hotspot] {
 	static async updateHotspotLocation(nftID, lat, lng) {
 		let transaction = `
 
-import "HotspotRegistry"
+import HotspotRegistry from 0xHotspotRegistry
 
 transaction(nftID: UInt64, lat: UFix64, lng: UFix64) {
     prepare(acct: auth(Storage) &Account) {
