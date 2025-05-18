@@ -1,4 +1,4 @@
-# Waddle: Decentralized 5G Network on Flow Blockchain
+# 📡 Waddle: A Decentralized 5G Network on Flow
 
 ![Waddle Banner](images/waddle_banner_1.png)
 
