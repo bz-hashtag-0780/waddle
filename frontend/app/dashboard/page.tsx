@@ -18,7 +18,7 @@ import {
 const DashboardPage = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const { user, isLoading: authLoading } = useAuth();
+	const { user, isLoading: authLoading, isInitialized } = useAuth();
 	const [hotspots, setHotspots] = useState<Hotspot[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [hasNFT, setHasNFT] = useState<boolean>(false);
@@ -51,11 +51,15 @@ const DashboardPage = () => {
 	}, [searchParams]);
 
 	useEffect(() => {
-		// Redirect to login if not authenticated
-		if (!authLoading && !user) {
+		// Only redirect to login if auth is fully initialized AND user is not logged in
+		// This prevents redirection during the initialization process
+		if (isInitialized && !authLoading && !user) {
+			console.log(
+				'Auth is initialized and user is not logged in. Redirecting to login.'
+			);
 			router.push('/login');
 		}
-	}, [user, authLoading, router]);
+	}, [user, authLoading, isInitialized, router]);
 
 	const refreshNFTStatus = async () => {
 		try {
@@ -124,7 +128,8 @@ const DashboardPage = () => {
 		}
 	}, [user]);
 
-	if (authLoading) {
+	// Show loading state if auth is still loading or not fully initialized
+	if (authLoading || !isInitialized) {
 		return (
 			<div className="flex min-h-screen items-center justify-center">
 				<svg
