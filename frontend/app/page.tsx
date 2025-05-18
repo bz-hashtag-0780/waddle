@@ -339,10 +339,6 @@ export default function Home() {
 						</span>
 						<span className="block">Join our network today</span>
 					</h2>
-					<p className="mt-4 text-lg leading-6 text-white-500">
-						Be part of the decentralized 5G revolution and earn
-						rewards while providing essential connectivity.
-					</p>
 					<Link
 						href={user ? '/dashboard' : '/login'}
 						className="mt-8 inline-flex w-full items-center justify-center rounded-md border border-transparent bg-white px-5 py-3 text-base font-medium text-[rgb(117,206,254)] hover:bg-blue-50 sm:w-auto"

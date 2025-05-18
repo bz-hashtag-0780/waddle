@@ -1177,7 +1177,7 @@ if acct.storage.borrow<&CapabilityFilter.AllowAllFilter>(from: CapabilityFilter.
 	return (
 		<Layout>
 			<div className="max-w-4xl mx-auto">
-				<DebugInfo />
+				{/* <DebugInfo /> */}
 				<h1 className="text-2xl font-bold text-gray-900 mb-2">
 					Account Linking
 				</h1>
