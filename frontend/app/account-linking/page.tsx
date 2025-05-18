@@ -988,7 +988,8 @@ if acct.storage.borrow<&CapabilityFilter.AllowAllFilter>(from: CapabilityFilter.
 							<Button
 								onClick={() =>
 									window.open(
-										'https://flowscan.org',
+										'https://flowscan.io/account' +
+											flowAddress,
 										'_blank'
 									)
 								}
