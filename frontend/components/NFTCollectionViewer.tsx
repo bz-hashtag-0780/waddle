@@ -357,8 +357,8 @@ const NFTCollectionViewer = forwardRef<
 											{parseFloat(
 												selectedNft.rewardsVault
 													.balance || '0'
-											).toFixed(8)}{' '}
-											FLOW
+											).toFixed(2)}{' '}
+											$5G
 										</p>
 									</div>
 								)}
