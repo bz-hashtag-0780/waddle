@@ -131,7 +131,7 @@ access(all) fun main(): [HotspotRegistry.Hotspot] {
 
 import HotspotRegistry from 0xHotspotRegistry
 
-transaction(nftID: UInt64, lat: UFix64, lng: UFix64) {
+transaction(nftID: UInt64, lat: Fix64, lng: Fix64) {
     prepare(acct: auth(Storage) &Account) {
 
         let adminRef = acct.storage.borrow<&HotspotRegistry.Admin>(from: HotspotRegistry.AdminStoragePath)?? panic("Could not borrow Admin reference")
@@ -162,8 +162,8 @@ transaction(nftID: UInt64, lat: UFix64, lng: UFix64) {
 		try {
 			const txid = await signer.sendTransaction(transaction, (arg, t) => [
 				arg(nftID, t.UInt64),
-				arg(lat, t.UFix64),
-				arg(lng, t.UFix64),
+				arg(lat, t.Fix64),
+				arg(lng, t.Fix64),
 			]);
 
 			if (txid) {
