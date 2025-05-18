@@ -99,8 +99,13 @@ const HotspotList: React.FC<HotspotListProps> = ({
 								</div>
 								<div className="text-gray-500">Location:</div>
 								<div className="text-gray-900">
-									{hotspot.lat.toFixed(4)},{' '}
-									{hotspot.lng.toFixed(4)}
+									{hotspot.lat !== null
+										? hotspot.lat.toFixed(4)
+										: 'N/A'}
+									,{' '}
+									{hotspot.lng !== null
+										? hotspot.lng.toFixed(4)
+										: 'N/A'}
 								</div>
 								<div className="text-gray-500">
 									Total Uptime:

@@ -27,8 +27,12 @@ const NetworkMap: React.FC<NetworkMapProps> = ({
 		// This is to fix the missing icon issue with react-leaflet
 		if (typeof window !== 'undefined') {
 			import('leaflet').then((L) => {
-				// Need to use any type here because _getIconUrl is not defined in the type
-				const icon = L.Icon.Default.prototype as any;
+				// Define a proper type for the icon prototype
+				interface IconPrototype {
+					_getIconUrl?: unknown;
+				}
+
+				const icon = L.Icon.Default.prototype as IconPrototype;
 				delete icon._getIconUrl;
 
 				L.Icon.Default.mergeOptions({
@@ -76,6 +80,28 @@ const NetworkMap: React.FC<NetworkMapProps> = ({
 		return null;
 	}
 
+	// Filter out hotspots without valid coordinates
+	const validHotspots = hotspots.filter(
+		(hotspot) => hotspot.lat !== null && hotspot.lng !== null
+	);
+
+	if (validHotspots.length === 0) {
+		return (
+			<div
+				style={{ height, width }}
+				className="bg-gray-100 flex flex-col items-center justify-center text-center"
+			>
+				<p className="text-gray-500 mb-2">
+					No hotspots with location data available
+				</p>
+				<p className="text-sm text-gray-400">
+					Hotspots will appear on the map once their location is
+					assigned
+				</p>
+			</div>
+		);
+	}
+
 	return (
 		<div style={{ height, width }}>
 			<MapContainer
@@ -88,10 +114,15 @@ const NetworkMap: React.FC<NetworkMapProps> = ({
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 				/>
 
-				{hotspots.map((hotspot) => (
+				{validHotspots.map((hotspot) => (
 					<React.Fragment key={hotspot.id}>
 						{/* Marker for the hotspot location */}
-						<Marker position={[hotspot.lat, hotspot.lng]}>
+						<Marker
+							position={[
+								Number(hotspot.lat),
+								Number(hotspot.lng),
+							]}
+						>
 							<Popup>
 								<div className="p-2">
 									<h3 className="font-medium">
@@ -115,7 +146,7 @@ const NetworkMap: React.FC<NetworkMapProps> = ({
 
 						{/* Circle showing coverage area (roughly 300-400m for 5G) */}
 						<Circle
-							center={[hotspot.lat, hotspot.lng]}
+							center={[Number(hotspot.lat), Number(hotspot.lng)]}
 							radius={hotspot.online ? 400 : 200}
 							pathOptions={{
 								color: hotspot.online ? '#3b82f6' : '#6b7280',

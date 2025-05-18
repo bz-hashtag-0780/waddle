@@ -1,68 +1,109 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Layout from '../../components/Layout';
-import NetworkMap from '../../components/NetworkMap';
-import Card from '../../components/Card';
-import { Hotspot } from '../../types/flow';
-import { getAllHotspots } from '../../services/flow';
+import Layout from '@/components/Layout';
+import NetworkMap from '@/components/NetworkMap';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import { Hotspot } from '@/types/flow';
+import { getAllHotspots } from '@/services/flow';
 
 const NetworkPage = () => {
 	const [hotspots, setHotspots] = useState<Hotspot[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+	const [error, setError] = useState<string | null>(null);
 	const [stats, setStats] = useState({
 		total: 0,
 		online: 0,
 		coverage: 0,
 	});
 
+	const fetchHotspotsData = async () => {
+		try {
+			setIsLoading(true);
+			setError(null);
+			console.log('Fetching hotspot data...');
+
+			// Fetch all hotspots
+			const fetchedHotspots = await getAllHotspots();
+			console.log(
+				`Received ${fetchedHotspots.length} hotspots from the API`
+			);
+			setHotspots(fetchedHotspots);
+			setLastRefreshed(new Date());
+
+			// Calculate statistics
+			const onlineCount = fetchedHotspots.filter((h) => h.online).length;
+
+			// Filter out hotspots without location data for coverage calculation
+			const hotspotsWithLocation = fetchedHotspots.filter(
+				(h) => h.lat !== null && h.lng !== null
+			);
+
+			// Rough estimation of coverage area (pi * r^2 * count)
+			// 5G range is about 400m, so a single hotspot covers ~0.5 sq km
+			const coverageArea = hotspotsWithLocation.reduce((sum, hotspot) => {
+				return sum + (hotspot.online ? 0.5 : 0.25); // Online hotspots have full coverage, offline have half
+			}, 0);
+
+			setStats({
+				total: fetchedHotspots.length,
+				online: onlineCount,
+				coverage: coverageArea,
+			});
+		} catch (error) {
+			console.error('Error fetching network data:', error);
+			setError('Failed to load hotspot data. Please try again.');
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	// Initial data load
 	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setIsLoading(true);
-
-				// Fetch all hotspots
-				const fetchedHotspots = await getAllHotspots();
-				setHotspots(fetchedHotspots);
-
-				// Calculate statistics
-				const onlineCount = fetchedHotspots.filter(
-					(h) => h.online
-				).length;
-
-				// Rough estimation of coverage area (pi * r^2 * count)
-				// 5G range is about 400m, so a single hotspot covers ~0.5 sq km
-				const coverageArea = fetchedHotspots.reduce((sum, hotspot) => {
-					return sum + (hotspot.online ? 0.5 : 0.25); // Online hotspots have full coverage, offline have half
-				}, 0);
-
-				setStats({
-					total: fetchedHotspots.length,
-					online: onlineCount,
-					coverage: coverageArea,
-				});
-			} catch (error) {
-				console.error('Error fetching network data:', error);
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		fetchData();
+		fetchHotspotsData();
 	}, []);
+
+	const handleRefresh = () => {
+		fetchHotspotsData();
+	};
 
 	return (
 		<Layout>
 			<div className="space-y-6">
-				<div>
-					<h1 className="text-2xl font-bold text-gray-900">
-						Network Map
-					</h1>
-					<p className="mt-1 text-sm text-gray-500">
-						View the current coverage of our decentralized 5G
-						network
-					</p>
+				<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+					<div>
+						<h1 className="text-2xl font-bold text-gray-900">
+							Network Map
+						</h1>
+						<p className="mt-1 text-sm text-gray-500">
+							View the current coverage of our decentralized 5G
+							network
+						</p>
+					</div>
+					<div className="flex items-center gap-4">
+						{lastRefreshed && (
+							<div className="text-sm text-gray-500">
+								Last updated:{' '}
+								{lastRefreshed.toLocaleTimeString()}
+							</div>
+						)}
+						<Button
+							onClick={handleRefresh}
+							disabled={isLoading}
+							className="whitespace-nowrap"
+						>
+							{isLoading ? 'Refreshing...' : 'Refresh Data'}
+						</Button>
+					</div>
 				</div>
+
+				{error && (
+					<div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+						{error}
+					</div>
+				)}
 
 				{/* Statistics Cards */}
 				<div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
