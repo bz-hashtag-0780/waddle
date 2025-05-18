@@ -263,7 +263,7 @@ transaction(nftID: UInt64) {
     }
 }
       `,
-			args: (arg, t) => [arg(nftID, t.UInt64)],
+			args: (arg, t) => [arg(nftID.toString(), t.UInt64)],
 			payer: magic.flow.authorization,
 			proposer: magic.flow.authorization,
 			authorizations: [magic.flow.authorization],
