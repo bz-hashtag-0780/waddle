@@ -310,7 +310,7 @@ transaction(parent: Address) {
             filter.removeType(allowedType)
         }
 
-        let collectionIdentifiers = ["A.cc6a3536f37381a2.HotspotOperatorNFT.Collection"]
+        let collectionIdentifiers = ["A.efc9bea2fda54f34.HotspotOperatorNFT.Collection"]
 
         for collectionIdent in collectionIdentifiers {
             let c = CompositeType(collectionIdent)!

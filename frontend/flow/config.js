@@ -32,6 +32,7 @@ const fclConfig = {
 		'0xNFTProviderFactory': '0x294e44e1ec6993c6',
 		'0xHotspotRegistry': '0xcc6a3536f37381a2',
 		'0xHotspotOperatorNFT': '0xcc6a3536f37381a2',
+		'0xRandomPicker': '0xcc6a3536f37381a2',
 	},
 	mainnet: {
 		'accessNode.api': 'https://rest-mainnet.onflow.org',
@@ -46,6 +47,9 @@ const fclConfig = {
 		'0xNFTCollectionPublicFactory': '0xd8a7e05a7ac670c0',
 		'0xNFTProviderAndCollectionFactory': '0xd8a7e05a7ac670c0',
 		'0xNFTProviderFactory': '0xd8a7e05a7ac670c0',
+		'0xRandomPicker': '0x85ba07db77467695',
+		'0xHotspotRegistry': '0xefc9bea2fda54f34',
+		'0xHotspotOperatorNFT': '0xefc9bea2fda54f34',
 	},
 };
 

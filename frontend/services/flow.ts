@@ -60,8 +60,8 @@ export const mintNFTCommit = async (magic: Magic): Promise<string> => {
 // Note: You must run the setupHotspotOperatorNFTCollection transaction first
 // to set up your account to receive NFTs.
 
-import HotspotOperatorNFT from 0xcc6a3536f37381a2
-import RandomPicker from 0xcc6a3536f37381a2
+import HotspotOperatorNFT from 0xHotspotOperatorNFT
+import RandomPicker from 0xRandomPicker
 
 transaction {
     prepare(acct: auth(Storage) &Account) {
@@ -109,9 +109,9 @@ export const mintNFTReveal = async (magic: Magic): Promise<string> => {
 // This transaction reveals the random selection and completes the minting of a new HotspotOperatorNFT
 // This must be executed after running mintNFTcommit.cdc and waiting at least one block.
 
-import HotspotOperatorNFT from 0xcc6a3536f37381a2
-import RandomPicker from 0xcc6a3536f37381a2
-import NonFungibleToken from 0x631e88ae7f1d7c20
+import HotspotOperatorNFT from 0xHotspotOperatorNFT
+import RandomPicker from 0xRandomPicker
+import NonFungibleToken from 0xNonFungibleToken
 
 transaction {
     prepare(acct: auth(Storage, IssueStorageCapabilityController, PublishCapability) &Account) {
@@ -492,8 +492,8 @@ export const checkHotspotOperatorNFTOwnership = async (
 		// Query the blockchain to check if the user owns any HotspotOperatorNFTs
 		const result = await fcl.query({
 			cadence: `
-				import HotspotOperatorNFT from 0xcc6a3536f37381a2
-				import NonFungibleToken from 0x631e88ae7f1d7c20
+				import HotspotOperatorNFT from 0xHotspotOperatorNFT
+				import NonFungibleToken from 0xNonFungibleToken
 
 				access(all) fun main(address: Address): Bool {
 					// Get the public account object for the address
@@ -623,8 +623,8 @@ export const getUserNFTs = async (
 		// Execute a simpler FCL script that just gets the NFT IDs
 		const nftData = await fcl.query({
 			cadence: `
-				import HotspotOperatorNFT from 0xcc6a3536f37381a2
-				import NonFungibleToken from 0x631e88ae7f1d7c20
+				import HotspotOperatorNFT from 0xHotspotOperatorNFT
+				import NonFungibleToken from 0xNonFungibleToken
 				
 				access(all) fun main(address: Address): [&HotspotOperatorNFT.NFT] {
 					let account = getAccount(address)
