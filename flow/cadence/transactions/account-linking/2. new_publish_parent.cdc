@@ -1,0 +1,82 @@
+import "HybridCustody"
+import "CapabilityFactory"
+import "CapabilityFilter"
+import "CapabilityDelegator"
+import "HotspotOperatorNFT"
+import "NonFungibleToken"
+
+access(all) fun createCapIfNotExists(_ acct: auth(StorageCapabilities) &Account, forPath: StoragePath) {
+    var capExists = false
+
+    acct.capabilities.storage.forEachController(forPath: forPath, fun (controller: &StorageCapabilityController): Bool {
+        if (controller.borrowType.isSubtype(of: Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Collection}>())) {
+            capExists = true
+
+            return true
+        }
+
+        return false
+    })
+
+
+    if (!capExists) {
+        acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Collection}>(forPath)
+    }
+}
+
+transaction(parent: Address) {
+    prepare(acct: auth(Storage, Capabilities, StorageCapabilities) &Account) {
+        createCapIfNotExists(acct, forPath: HotspotOperatorNFT.CollectionStoragePath)
+
+        let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(
+            from: HybridCustody.OwnedAccountStoragePath
+        ) ?? panic("owned account not found")
+
+        // Use a unique per-parent filter path
+        let filterStoragePath = StoragePath(identifier: "CapFilter_".concat(parent.toString()))!
+        let filterPublicPath = PublicPath(identifier: "CapFilter_".concat(parent.toString()))!
+
+        if acct.storage.borrow<&CapabilityFilter.AllowlistFilter>(from: filterStoragePath) == nil {
+            acct.storage.save(<- CapabilityFilter.createFilter(Type<@CapabilityFilter.AllowlistFilter>()), to: filterStoragePath)
+
+            // Publish the filter
+            acct.capabilities.unpublish(filterPublicPath)
+            acct.capabilities.publish(
+                acct.capabilities.storage.issue<&{CapabilityFilter.Filter}>(filterStoragePath),
+                at: filterPublicPath
+            )
+        }
+
+        // Add Hotspot NFT type to filter
+        let filter = acct.storage.borrow<auth(CapabilityFilter.Add, CapabilityFilter.Delete) &CapabilityFilter.AllowlistFilter>(
+            from: filterStoragePath
+        ) ?? panic("failed to borrow filter")
+
+        let hotspotType = Type<@HotspotOperatorNFT.Collection>()
+        filter.removeType(hotspotType) // avoid duplicate panic
+        filter.addType(hotspotType)
+
+        let filterCap = acct.capabilities.get<&{CapabilityFilter.Filter}>(filterPublicPath)
+        assert(filterCap.check(), message: "filter capability not set up")
+
+        // Setup factory
+        if acct.storage.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath) == nil {
+            let f <- CapabilityFactory.createFactoryManager()
+            acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
+        }
+
+        if !acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check() {
+            acct.capabilities.unpublish(CapabilityFactory.PublicPath)
+            acct.capabilities.publish(
+                acct.capabilities.storage.issue<&CapabilityFactory.Manager>(CapabilityFactory.StoragePath),
+                at: CapabilityFactory.PublicPath
+            )
+        }
+
+        let factory = acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
+        assert(factory.check(), message: "factory not set up")
+
+        // Publish to parent
+        owned.publishToParent(parentAddress: parent, factory: factory, filter: filterCap)
+    }
+}
