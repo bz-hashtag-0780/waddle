@@ -418,6 +418,21 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
 
 ## Project Status Board
 
+### MVP Features
+
+-   [x] Account Setup with Email
+-   [x] Account Linking to Web3 Wallet
+-   [ ] Hotspot Registration Flow
+    -   [x] Analyze the existing implementation
+    -   [x] Modify transaction service to use Magic.link authorization
+    -   [x] Create/update the registration form
+    -   [x] Implement the transaction flow
+    -   [x] Add registration to dashboard
+    -   [ ] Test end-to-end flow
+-   [ ] Hotspot Management Dashboard
+-   [ ] Uptime Proof Submission
+-   [ ] Network Visualization
+
 ### Smart Contracts
 
 -   [COMPLETED] NFT contract for hotspot operators ✅
@@ -868,3 +883,20 @@ To properly integrate our frontend with the deployed smart contracts on Flow tes
 -   Real-time updates work when blockchain state changes
 -   Error handling gracefully manages failed transactions
 -   Performance remains responsive even with blockchain latency
+
+## Executor's Feedback or Assistance Requests
+
+### Hotspot Registration Implementation Update - January 15, 2024
+
+I've updated the hotspot registration feature to only use the nftID parameter as requested:
+
+1. Modified the `registerHotspot` function in `frontend/services/flow.ts` to only accept magic and nftID parameters
+2. Updated the `registerHotspotComplete` function to match this change
+3. Modified the `HotspotRegistrationForm` and `HotspotRegistration` components to:
+    - Remove the name, latitude, and longitude input fields
+    - Add a dropdown selector for NFTs
+    - Handle complex NFT ID objects properly
+    - Show a message explaining that the admin will assign location details later
+4. Added proper handling for different NFT ID formats (string, number, or object)
+
+The implementation now allows users to select one of their owned NFTs to register a hotspot without providing location details, which will be assigned by the admin later.

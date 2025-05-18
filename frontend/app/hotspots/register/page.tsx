@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../contexts/AuthContext';
-import Layout from '../../../components/Layout';
-import HotspotRegistrationForm from '../../../components/HotspotRegistrationForm';
-import { checkHotspotOperatorNFTOwnership } from '../../../services/flow';
+import { useAuth } from '@/contexts/AuthContext';
+import Layout from '@/components/Layout';
+import HotspotRegistrationForm from '@/components/HotspotRegistrationForm';
+import { checkHotspotOperatorNFTOwnership } from '@/services/flow';
 
 const RegisterHotspotPage = () => {
 	const router = useRouter();
@@ -43,9 +43,8 @@ const RegisterHotspotPage = () => {
 	}, [user]);
 
 	const handleRegistrationSuccess = (hotspotId: string) => {
-		// Show success message and redirect to the hotspot details page
-		alert(`Hotspot #${hotspotId} registered successfully!`);
-		router.push(`/hotspots/${hotspotId}`);
+		// Show success message and redirect to the dashboard
+		router.push('/dashboard?registration=success&hotspotId=' + hotspotId);
 	};
 
 	if (authLoading || isChecking) {

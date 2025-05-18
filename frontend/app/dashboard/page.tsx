@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
 import Card from '@/components/Card';
@@ -17,12 +17,36 @@ import {
 
 const DashboardPage = () => {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { user, isLoading: authLoading } = useAuth();
 	const [hotspots, setHotspots] = useState<Hotspot[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [hasNFT, setHasNFT] = useState<boolean>(false);
 	const [totalRewards, setTotalRewards] = useState<number>(0);
 	const [flowBalance, setFlowBalance] = useState<number>(0);
+	const [showSuccessMessage, setShowSuccessMessage] =
+		useState<boolean>(false);
+	const [registeredHotspotId, setRegisteredHotspotId] = useState<
+		string | null
+	>(null);
+
+	useEffect(() => {
+		// Check for registration success parameter
+		const registration = searchParams.get('registration');
+		const hotspotId = searchParams.get('hotspotId');
+
+		if (registration === 'success' && hotspotId) {
+			setShowSuccessMessage(true);
+			setRegisteredHotspotId(hotspotId);
+
+			// Clear the URL parameters after 5 seconds
+			const timer = setTimeout(() => {
+				window.history.replaceState({}, '', '/dashboard');
+			}, 5000);
+
+			return () => clearTimeout(timer);
+		}
+	}, [searchParams]);
 
 	useEffect(() => {
 		// Redirect to login if not authenticated
@@ -105,6 +129,40 @@ const DashboardPage = () => {
 	return (
 		<Layout>
 			<div className="space-y-6">
+				{showSuccessMessage && (
+					<div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
+						<div className="flex">
+							<div className="flex-shrink-0">
+								<svg
+									className="h-5 w-5 text-green-400"
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+								>
+									<path
+										fillRule="evenodd"
+										d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+										clipRule="evenodd"
+									/>
+								</svg>
+							</div>
+							<div className="ml-3">
+								<h3 className="text-sm font-medium text-green-800">
+									Hotspot Registered Successfully!
+								</h3>
+								<div className="mt-2 text-sm text-green-700">
+									<p>
+										Your new hotspot (ID:{' '}
+										{registeredHotspotId}) has been
+										registered. It will appear in your list
+										below.
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				)}
+
 				<div className="md:flex md:items-center md:justify-between">
 					<div>
 						<h1 className="text-2xl font-bold text-gray-900">

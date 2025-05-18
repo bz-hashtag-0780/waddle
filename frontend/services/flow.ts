@@ -199,7 +199,7 @@ export const mintHotspotOperatorNFT = async (
 	try {
 		const transactionId = await fcl.mutate({
 			cadence: `
-        import HotspotOperatorNFT from ${CONTRACT_ADDRESSES.HotspotOperatorNFT}
+
 
         transaction(recipientAddress: Address, name: String, description: String, thumbnail: String) {
           let minterRef: &HotspotOperatorNFT.NFTMinter
@@ -241,17 +241,18 @@ export const registerHotspot = async (
 	nftID: number
 ): Promise<string> => {
 	try {
-		console.log(`Registering hotspot, nft id: "${nftID}"`);
+		console.log(`Registering hotspot with NFT ID: ${nftID}`);
 
 		const transactionId = await fcl.mutate({
 			cadence: `
-import HotspotRegistry
-import HotspotOperatorNFT
+import HotspotRegistry from 0xHotspotRegistry
+import HotspotOperatorNFT from 0xHotspotOperatorNFT
+import NonFungibleToken from 0xNonFungibleToken
 
 transaction(nftID: UInt64) {
     prepare(acct: auth(Storage) &Account) {
 
-        let collectionRef: &HotspotOperatorNFT.Collection = acct.storage.borrow<&HotspotOperatorNFT.Collection>(from: HotspotOperatorNFT.CollectionStoragePath)?? panic("Could not borrow operator collection reference")
+        let collectionRef = acct.storage.borrow<auth(NonFungibleToken.Withdraw) &HotspotOperatorNFT.Collection>(from: HotspotOperatorNFT.CollectionStoragePath)?? panic("Could not borrow operator collection reference")
         
         let nft <- HotspotRegistry.registerHotspot(
             owner: acct.address,
@@ -330,7 +331,7 @@ export const submitUptimeProof = async (
 	try {
 		const transactionId = await fcl.mutate({
 			cadence: `
-        import UptimeProof from ${CONTRACT_ADDRESSES.UptimeProof}
+        
 
         transaction(hotspotID: UInt64, duration: UFix64, signalStrength: UFix64) {
           let adminRef: &UptimeProof.Admin

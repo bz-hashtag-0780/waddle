@@ -30,6 +30,8 @@ const fclConfig = {
 		'0xNFTCollectionPublicFactory': '0x294e44e1ec6993c6',
 		'0xNFTProviderAndCollectionFactory': '0x294e44e1ec6993c6',
 		'0xNFTProviderFactory': '0x294e44e1ec6993c6',
+		'0xHotspotRegistry': '0xcc6a3536f37381a2',
+		'0xHotspotOperatorNFT': '0xcc6a3536f37381a2',
 	},
 	mainnet: {
 		'accessNode.api': 'https://rest-mainnet.onflow.org',

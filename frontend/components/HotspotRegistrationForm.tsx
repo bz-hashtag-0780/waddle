@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import Input from './Input';
 import Button from './Button';
 import Card from './Card';
-import { registerHotspot, getUserNFTs } from '@/services/flow';
+import { getUserNFTs, registerHotspotComplete } from '@/services/flow';
+import { useMagic } from '@/contexts/MagicContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface HotspotRegistrationFormProps {
@@ -10,21 +10,34 @@ interface HotspotRegistrationFormProps {
 }
 
 interface NFT {
-	id: number;
-	name: string;
+	id: number | string | { id: string; uuid: string };
+	metadata?: {
+		name?: string;
+		description?: string;
+		thumbnail?: string;
+		type?: string;
+		traits?: Record<string, string>;
+		createdAt?: string;
+		serial?: string;
+	};
+	rewardsVault?: {
+		balance: string;
+		uuid: string;
+	};
 }
 
 const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 	onSuccess,
 }) => {
 	const { user } = useAuth();
-	const [lat, setLat] = useState<string>('');
-	const [lng, setLng] = useState<string>('');
+	const { magic } = useMagic();
 	const [nfts, setNfts] = useState<NFT[]>([]);
-	const [selectedNft, setSelectedNft] = useState<number | null>(null);
+	const [selectedNftId, setSelectedNftId] = useState<number | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string>('');
+	const [transactionId, setTransactionId] = useState<string | null>(null);
+	const [hotspotId, setHotspotId] = useState<string | null>(null);
 
 	// Fetch user's NFTs
 	useEffect(() => {
@@ -36,7 +49,13 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 				const userNFTs = await getUserNFTs(user.address);
 				setNfts(userNFTs);
 				if (userNFTs.length > 0) {
-					setSelectedNft(userNFTs[0].id);
+					// Get the ID from the first NFT, handling object case
+					const firstNftId =
+						typeof userNFTs[0].id === 'object'
+							? userNFTs[0].id.id
+							: userNFTs[0].id;
+					// Select first NFT by default
+					setSelectedNftId(Number(firstNftId));
 				}
 			} catch (err) {
 				console.error('Error fetching NFTs:', err);
@@ -46,20 +65,22 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 			}
 		};
 
-		fetchNFTs();
+		if (user) {
+			fetchNFTs();
+		}
 	}, [user]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// Form validation
-		if (!lat || !lng) {
-			setError('Please provide both latitude and longitude.');
+		if (!magic) {
+			setError('Magic is not initialized. Please try again later.');
 			return;
 		}
 
-		if (selectedNft === null) {
-			setError('Please select an NFT for this hotspot.');
+		// Form validation
+		if (selectedNftId === null) {
+			setError('Please select an NFT to use for hotspot registration.');
 			return;
 		}
 
@@ -67,53 +88,73 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 			setIsSubmitting(true);
 			setError('');
 
-			// Convert lat/lng to numbers
-			const latNum = parseFloat(lat);
-			const lngNum = parseFloat(lng);
-
-			// Validate coordinates
-			if (isNaN(latNum) || isNaN(lngNum)) {
-				setError('Please provide valid coordinates.');
-				return;
-			}
-
-			if (latNum < -90 || latNum > 90) {
-				setError('Latitude must be between -90 and 90 degrees.');
-				return;
-			}
-
-			if (lngNum < -180 || lngNum > 180) {
-				setError('Longitude must be between -180 and 180 degrees.');
-				return;
-			}
-
-			// Register hotspot with NFT
-			const hotspotId = await registerHotspot(
-				latNum,
-				lngNum,
-				selectedNft
+			console.log(
+				'Registering hotspot using selected NFT ID:',
+				selectedNftId
 			);
 
-			// Clear form
-			setLat('');
-			setLng('');
+			// Register hotspot with Magic authorization
+			const result = await registerHotspotComplete(magic, selectedNftId);
 
-			// Call onSuccess callback if provided
-			if (onSuccess) {
-				onSuccess(hotspotId);
+			setTransactionId(result.transactionId);
+
+			if (result.hotspotId) {
+				setHotspotId(result.hotspotId);
+
+				// Call onSuccess callback if provided
+				if (onSuccess) {
+					onSuccess(result.hotspotId);
+				}
+			} else {
+				console.warn(
+					'Hotspot registered but no ID was returned. Transaction ID:',
+					result.transactionId
+				);
 			}
+
+			// Reset selected NFT
+			setSelectedNftId(null);
 		} catch (err) {
 			console.error('Error registering hotspot:', err);
-			setError('Failed to register hotspot. Please try again.');
+			setError(
+				err instanceof Error
+					? err.message
+					: 'Failed to register hotspot. Please try again.'
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
 
+	// Display transaction details if available
+	const renderTransactionInfo = () => {
+		if (!transactionId) return null;
+
+		return (
+			<div className="mt-4 border-t pt-4">
+				<h4 className="text-sm font-medium text-gray-900">
+					Transaction Details
+				</h4>
+				<div className="mt-2 text-sm text-gray-600">
+					<p>
+						<span className="font-medium">Transaction ID:</span>{' '}
+						<span className="break-all">{transactionId}</span>
+					</p>
+					{hotspotId && (
+						<p className="mt-1">
+							<span className="font-medium">Hotspot ID:</span>{' '}
+							{hotspotId}
+						</p>
+					)}
+				</div>
+			</div>
+		);
+	};
+
 	return (
 		<Card
 			title="Register a New Hotspot"
-			description="Add a new 5G hotspot to the network using your NFT."
+			description="Select an NFT to register a new hotspot on the network."
 		>
 			<form onSubmit={handleSubmit}>
 				<div className="space-y-4">
@@ -122,28 +163,6 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 							<p className="text-sm text-red-600">{error}</p>
 						</div>
 					)}
-
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<Input
-							label="Latitude"
-							type="text"
-							value={lat}
-							onChange={(e) => setLat(e.target.value)}
-							placeholder="e.g., 37.7749"
-							required
-							fullWidth
-						/>
-
-						<Input
-							label="Longitude"
-							type="text"
-							value={lng}
-							onChange={(e) => setLng(e.target.value)}
-							placeholder="e.g., -122.4194"
-							required
-							fullWidth
-						/>
-					</div>
 
 					<div>
 						<label className="block text-sm font-medium text-gray-700 mb-1">
@@ -161,31 +180,56 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 						) : (
 							<select
 								className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-								value={selectedNft || ''}
+								value={selectedNftId || ''}
 								onChange={(e) =>
-									setSelectedNft(Number(e.target.value))
+									setSelectedNftId(Number(e.target.value))
 								}
 								required
 							>
 								<option value="">Select an NFT</option>
-								{nfts.map((nft) => (
-									<option key={nft.id} value={nft.id}>
-										{nft.name} (ID: {nft.id})
-									</option>
-								))}
+								{nfts.map((nft) => {
+									// Convert complex ID objects to string for use as option value and key
+									const nftId =
+										typeof nft.id === 'object'
+											? nft.id.id
+											: nft.id;
+									return (
+										<option
+											key={String(nftId)}
+											value={nftId}
+										>
+											{nft.metadata?.name ||
+												`NFT #${nftId}`}
+										</option>
+									);
+								})}
 							</select>
 						)}
 					</div>
+
+					<div className="mt-2 text-sm text-gray-600">
+						<p>
+							The admin will assign location details to this
+							hotspot later.
+						</p>
+					</div>
+
+					{renderTransactionInfo()}
 
 					<div className="flex justify-end">
 						<Button
 							type="submit"
 							isLoading={isSubmitting}
 							disabled={
-								isSubmitting || isLoading || nfts.length === 0
+								isSubmitting ||
+								!magic ||
+								nfts.length === 0 ||
+								!selectedNftId
 							}
 						>
-							Register Hotspot
+							{isSubmitting
+								? 'Registering...'
+								: 'Register Hotspot'}
 						</Button>
 					</div>
 				</div>
