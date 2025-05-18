@@ -74,9 +74,10 @@ Waddle is a decentralized 5G network platform built on the Flow. It addresses th
     - Account linking capabilities
 
 3. **Backend (Simulated)**
-    - Uptime proof validation
+    - Uptime validation
+    - Location assigning
     - Reward distribution
-    - Administrator functions
+    - Admin functions
 
 ## AI-Assisted Development
 
