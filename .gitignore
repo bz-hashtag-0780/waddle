@@ -9,3 +9,4 @@ testnet-account.pkey
 # backend
 backend/node_modules
 backend/.env
+mainnet-account.pkey

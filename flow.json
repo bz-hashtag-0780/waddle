@@ -353,6 +353,13 @@
 				"type": "file",
 				"location": "testnet-account.pkey"
 			}
+		},
+		"mainnet-account": {
+			"address": "0xefc9bea2fda54f34",
+			"key": {
+				"type": "file",
+				"location": "mainnet-account.pkey"
+			}
 		}
 	},
 	"deployments": {
@@ -363,6 +370,13 @@
 				"HotspotOperatorNFT",
 				"HotspotRegistry",
 				"UptimeProof"
+			]
+		},
+		"mainnet": {
+			"mainnet-account": [
+				"FIVEGCOIN",
+				"HotspotOperatorNFT",
+				"HotspotRegistry"
 			]
 		}
 	}
