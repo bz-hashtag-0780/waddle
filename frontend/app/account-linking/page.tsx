@@ -140,10 +140,10 @@ transaction {
         }
 
         acct.capabilities.storage.issue<&{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath)
-        // acct.capabilities.publish(
-        //     acct.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath),
-        //     at: HybridCustody.OwnedAccountPublicPath
-        // )
+        acct.capabilities.publish(
+            acct.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath),
+            at: HybridCustody.OwnedAccountPublicPath
+        )
     }
 }
 					`,

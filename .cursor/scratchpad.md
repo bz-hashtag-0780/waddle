@@ -203,6 +203,53 @@ Based on dependencies and core functionality:
     - Test with various wallet types (extension, mobile, web)
     - Optimize the UI/UX based on testing results
 
+### Phase 6: Hotspot Registration Feature Implementation
+
+1. **Analyze Current Implementation**
+
+    - Review existing hotspot registration code
+    - Identify where Flow wallet authorization is used
+    - Map out transaction flow
+    - Success Criteria: Complete understanding of current implementation and identified points of change
+
+2. **Modify Transaction Service**
+
+    - Create or update `registerHotspot` function in flow service to use Magic.link
+    - Replace `fcl.authz` with `magic.flow.authorization`
+    - Add proper error handling and transaction status monitoring
+    - Success Criteria: Function successfully submits transactions using Magic.link authorization
+
+3. **Develop Registration Form Component**
+
+    - Create/update form for hotspot registration with fields:
+        - Hotspot name
+        - Geographic coordinates (lat/lng)
+        - Optional description
+    - Add validation for coordinates
+    - Include loading state during submission
+    - Success Criteria: Form accepts valid input and rejects invalid data
+
+4. **Implement Transaction Flow**
+
+    - Connect form submission to transaction service
+    - Add proper loading states during transaction processing
+    - Implement success and error handling
+    - Success Criteria: User can submit form and transaction executes properly with Magic.link auth
+
+5. **Add Registration to Dashboard**
+
+    - Integrate the registration component into dashboard
+    - Add visual feedback for registration success
+    - Update dashboard to show newly registered hotspot
+    - Success Criteria: Component is seamlessly integrated into dashboard and registration process flows naturally
+
+6. **Test End-to-End Flow**
+
+    - Test the full registration process from dashboard
+    - Verify hotspot is registered on-chain
+    - Test error handling and edge cases
+    - Success Criteria: Registration works consistently with proper error handling
+
 ## Current Status / Progress Tracking
 
 We've successfully fixed the Magic Link authentication implementation:
@@ -291,6 +338,34 @@ We've also successfully deployed all smart contracts to the Flow testnet:
 
 The Magic Link implementation is now fully operational and users can successfully log in using their email. All smart contracts have been deployed to the Flow testnet.
 
+The team has completed the account linking functionality and is now moving on to implementing hotspot registration. The existing code uses Flow wallet authorization instead of Magic.link, which needs to be modified to ensure a consistent authentication approach throughout the application.
+
+The key challenge is to update the hotspot registration transactions to use Magic.link's authorization instead of the default Flow wallet authorization, ensuring a seamless user experience across the application.
+
+## Key Challenges and Analysis for Hotspot Registration Feature
+
+1. **Authentication Flow Mismatch**:
+
+    - Current hotspot registration uses Flow wallet authorization
+    - Dashboard primarily uses Magic.link for authentication
+    - Need to ensure consistent authorization approach
+
+2. **Transaction Authorization**:
+
+    - Need to modify transaction code to use Magic.link's `magic.flow.authorization` instead of `fcl.authz`
+    - Ensure proper transaction structuring and error handling
+
+3. **UI/UX Considerations**:
+
+    - Registration form needs to be intuitive
+    - Success/error states need to be clearly communicated
+    - Loading states during transaction processing
+
+4. **Data Validation and Persistence**:
+    - Validate location data (latitude/longitude) before submission
+    - Ensure transaction correctly registers the hotspot on-chain
+    - Update UI after successful registration
+
 ## Executor's Feedback or Assistance Requests
 
 I've successfully fixed the Magic Link authentication by:
@@ -367,11 +442,18 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
 -   [COMPLETED] Implement Refresh Collection button functionality ✅
 -   [COMPLETED] Fix layout consistency for NFTs page ✅
 -   [COMPLETED] Apply shared header and footer to NFTs page ✅
--   [PLANNED] Implement account linking feature
--   [PLANNED] Create multi-step UI flow for account linking
--   [PLANNED] Integrate with Flow Wallet for account linking
+-   [COMPLETED] Implement account linking feature ✅
+-   [COMPLETED] Create multi-step UI flow for account linking ✅
+-   [COMPLETED] Integrate with Flow Wallet for account linking ✅
+-   [IN PROGRESS] Fix account linking transactions to use proper address aliases and Cadence types ✅
 -   [IN PROGRESS] Complete hotspot registration flow
--   [IN PROGRESS] Finalize network visualization
+    -   [TO DO] Analyze existing hotspot registration implementation
+    -   [TO DO] Modify transaction service to use Magic.link authorization
+    -   [TO DO] Create/update hotspot registration form component
+    -   [TO DO] Implement transaction flow with proper states
+    -   [TO DO] Integrate registration process into dashboard
+    -   [TO DO] Test end-to-end registration flow
+-   [PLANNED] Finalize network visualization
 
 ### Integration & Deployment
 
