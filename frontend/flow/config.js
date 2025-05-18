@@ -26,6 +26,7 @@ const fclConfig = {
 		'0xCapabilityFactory': '0x294e44e1ec6993c6',
 		'0xCapabilityFilter': '0x294e44e1ec6993c6',
 		'0xCapabilityDelegator': '0x294e44e1ec6993c6',
+		'0xNonFungibleToken': '0x631e88ae7f1d7c20',
 	},
 	mainnet: {
 		'accessNode.api': 'https://rest-mainnet.onflow.org',
@@ -36,6 +37,7 @@ const fclConfig = {
 		'0xCapabilityFactory': '0xd8a7e05a7ac670c0',
 		'0xCapabilityFilter': '0xd8a7e05a7ac670c0',
 		'0xCapabilityDelegator': '0xd8a7e05a7ac670c0',
+		'0xNonFungibleToken': '0x1d7e57aa55817448',
 	},
 };
 

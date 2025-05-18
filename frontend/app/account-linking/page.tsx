@@ -210,55 +210,94 @@ transaction {
 			try {
 				publishTxId = await fcl.mutate({
 					cadence: `
-			import HybridCustody from 0xHybridCustody
-			import CapabilityFactory from 0xCapabilityFactory
-			import CapabilityFilter from 0xCapabilityFilter
-			import CapabilityDelegator from 0xCapabilityDelegator
 
-			transaction(parent: Address) {
-			    prepare(acct: auth(Storage, Capabilities) &Account) {
-			        let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
-			            ?? panic("owned account not found")
+					import HybridCustody from 0xHybridCustody
+					import CapabilityFactory from 0xCapabilityFactory
+					import CapabilityFilter from 0xCapabilityFilter
+					import CapabilityDelegator from 0xCapabilityDelegator
+					import HotspotOperatorNFT from 0xHotspotOperatorNFT
+					import NonFungibleToken from 0xNonFungibleToken
 
-			        if acct.storage.borrow<&CapabilityFilter.AllowAllFilter>(from: CapabilityFilter.StoragePath) == nil {
-			            acct.storage.save(<- CapabilityFilter.createFilter(Type<@CapabilityFilter.AllowAllFilter>()), to: CapabilityFilter.StoragePath)
-			        }
+access(all) fun createCapIfNotExists(_ acct: auth(StorageCapabilities) &Account, forPath: StoragePath) {
+    var capExists = false
 
-			        acct.capabilities.unpublish(CapabilityFilter.PublicPath)
-			        acct.capabilities.publish(
-			            acct.capabilities.storage.issue<&{CapabilityFilter.Filter}>(CapabilityFilter.StoragePath),
-			            at: CapabilityFilter.PublicPath
-			        )
+    acct.capabilities.storage.forEachController(forPath: forPath, fun (controller: &StorageCapabilityController): Bool {
+        if (controller.borrowType.isSubtype(of: Type<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Collection}>())) {
+            capExists = true
 
-			        assert(acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check(), message: "failed to setup filter")
+            return true
+        }
 
-			        if acct.storage.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
-			            let f <- CapabilityFactory.createFactoryManager()
-			            acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
-			        }
+        return false
+    })
 
-			        if !acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check() {
-			            acct.capabilities.unpublish(CapabilityFactory.PublicPath)
 
-			            let cap = acct.capabilities.storage.issue<&CapabilityFactory.Manager>(CapabilityFactory.StoragePath)
-			            acct.capabilities.publish(cap, at: CapabilityFactory.PublicPath)
-			        }
+    if (!capExists) {
+        acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Collection}>(forPath)
+    }
+}
 
-			        assert(
-			            acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check(),
-			            message: "CapabilityFactory is not setup properly"
-			        )
+transaction(parent: Address) {
+    prepare(acct: auth(Storage, Capabilities, StorageCapabilities) &Account) {
+        createCapIfNotExists(acct, forPath: HotspotOperatorNFT.CollectionStoragePath)
 
-			        let factory = acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
-			        assert(factory.check(), message: "factory address is not configured properly")
+        let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(
+            from: HybridCustody.OwnedAccountStoragePath
+        ) ?? panic("owned account not found")
 
-			        let filter = acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-			        assert(filter.check(), message: "capability filter is not configured properly")
+        // Setup factory
+        if acct.storage.borrow<&CapabilityFactory.Manager>(from: CapabilityFactory.StoragePath) == nil {
+            let f <- CapabilityFactory.createFactoryManager()
+            acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
+        }
 
-			        owned.publishToParent(parentAddress: parent, factory: factory, filter: filter)
+        if !acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check() {
+            acct.capabilities.unpublish(CapabilityFactory.PublicPath)
+            acct.capabilities.publish(
+                acct.capabilities.storage.issue<&CapabilityFactory.Manager>(CapabilityFactory.StoragePath),
+                at: CapabilityFactory.PublicPath
+            )
+        }
 
-			    }
-			}
+        let factory = acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
+        assert(factory.check(), message: "factory not set up")
+
+        // Use a unique per-parent filter path
+        let filterStoragePath = StoragePath(identifier: "CapFilter_".concat(parent.toString()))!
+        let filterPublicPath = PublicPath(identifier: "CapFilter_".concat(parent.toString()))!
+
+        if acct.storage.borrow<&CapabilityFilter.AllowlistFilter>(from: filterStoragePath) == nil {
+            acct.storage.save(<- CapabilityFilter.createFilter(Type<@CapabilityFilter.AllowlistFilter>()), to: filterStoragePath)
+            acct.capabilities.unpublish(filterPublicPath)
+            acct.capabilities.publish(
+                acct.capabilities.storage.issue<&{CapabilityFilter.Filter}>(filterStoragePath), at: filterPublicPath)
+        }
+        
+
+        let filterCap = acct.capabilities.get<&{CapabilityFilter.Filter}>(filterPublicPath)
+        assert(filterCap.check(), message: "failed to load filter cap")
+
+        let filter = acct.storage.borrow<auth(CapabilityFilter.Add, CapabilityFilter.Delete) &CapabilityFilter.AllowlistFilter>(from: filterStoragePath)
+            ?? panic("filter does not exist")
+
+        let filterDetails = filter.getDetails() as! {String:AnyStruct}
+        for allowedType in filterDetails["allowedTypes"]! as! [Type]{
+            filter.removeType(allowedType)
+        }
+
+        let collectionIdentifiers = ["A.cc6a3536f37381a2.HotspotOperatorNFT.Collection"]
+
+        for collectionIdent in collectionIdentifiers {
+            let c = CompositeType(collectionIdent)!
+            filter.addType(c)
+        }
+
+        // Publish to parent
+        owned.publishToParent(parentAddress: parent, factory: factory, filter: filterCap)
+    }
+}
+
+
 								`,
 					args: (arg, t) => [arg(flowAddress, t.Address)],
 					proposer: magic.flow.authorization,
@@ -367,7 +406,7 @@ import CapabilityFilter from 0xCapabilityFilter
 
 transaction(childAddress: Address) {
     prepare(acct: auth(Storage, Capabilities, Inbox) &Account) {
-        var filter = getAccount(childAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+var filter = getAccount(childAddress).capabilities.get<&{CapabilityFilter.Filter}>(PublicPath(identifier: "CapFilter_".concat(acct.address.toString()))!)
 
         if acct.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
             let m <- HybridCustody.createManager(filter: filter)

@@ -6,7 +6,7 @@ import "CapabilityFilter"
 
 transaction(childAddress: Address) {
     prepare(acct: auth(Storage, Capabilities, Inbox) &Account) {
-        var filter = getAccount(childAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+        var filter = getAccount(childAddress).capabilities.get<&{CapabilityFilter.Filter}>(PublicPath(identifier: "CapFilter_".concat(acct.address.toString()))!)
 
         if acct.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
             let m <- HybridCustody.createManager(filter: filter)
