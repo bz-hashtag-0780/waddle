@@ -140,11 +140,10 @@ transaction {
         }
 
         acct.capabilities.storage.issue<&{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath)
-        // acct.capabilities.publish(
-        //     acct.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath),
-        //     at: HybridCustody.OwnedAccountPublicPath
-        // )
-		//TODO uncomment so new wallets can do it. or have a checker.
+        acct.capabilities.publish(
+            acct.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath),
+            at: HybridCustody.OwnedAccountPublicPath
+        )
     }
 }
 					`,
@@ -211,55 +210,56 @@ transaction {
 			try {
 				publishTxId = await fcl.mutate({
 					cadence: `
-import HybridCustody from 0xHybridCustody
-import CapabilityFactory from 0xCapabilityFactory
-import CapabilityFilter from 0xCapabilityFilter
-import CapabilityDelegator from 0xCapabilityDelegator
-						
-transaction(parent: Address) {
-    prepare(acct: auth(Storage, Capabilities) &Account) {
-        let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
-            ?? panic("owned account not found")
+			import HybridCustody from 0xHybridCustody
+			import CapabilityFactory from 0xCapabilityFactory
+			import CapabilityFilter from 0xCapabilityFilter
+			import CapabilityDelegator from 0xCapabilityDelegator
 
-        if acct.storage.borrow<&CapabilityFilter.AllowAllFilter>(from: CapabilityFilter.StoragePath) == nil {
-            acct.storage.save(<- CapabilityFilter.createFilter(Type<@CapabilityFilter.AllowAllFilter>()), to: CapabilityFilter.StoragePath)
-        }
+			transaction(parent: Address) {
+			    prepare(acct: auth(Storage, Capabilities) &Account) {
+			        let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+			            ?? panic("owned account not found")
 
-        acct.capabilities.unpublish(CapabilityFilter.PublicPath)
-        acct.capabilities.publish(
-            acct.capabilities.storage.issue<&{CapabilityFilter.Filter}>(CapabilityFilter.StoragePath),
-            at: CapabilityFilter.PublicPath
-        )
+			        if acct.storage.borrow<&CapabilityFilter.AllowAllFilter>(from: CapabilityFilter.StoragePath) == nil {
+			            acct.storage.save(<- CapabilityFilter.createFilter(Type<@CapabilityFilter.AllowAllFilter>()), to: CapabilityFilter.StoragePath)
+			        }
 
-        assert(acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check(), message: "failed to setup filter")
+			        acct.capabilities.unpublish(CapabilityFilter.PublicPath)
+			        acct.capabilities.publish(
+			            acct.capabilities.storage.issue<&{CapabilityFilter.Filter}>(CapabilityFilter.StoragePath),
+			            at: CapabilityFilter.PublicPath
+			        )
 
-        if acct.storage.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
-            let f <- CapabilityFactory.createFactoryManager()
-            acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
-        }
+			        assert(acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check(), message: "failed to setup filter")
 
-        if !acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check() {
-            acct.capabilities.unpublish(CapabilityFactory.PublicPath)
+			        if acct.storage.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
+			            let f <- CapabilityFactory.createFactoryManager()
+			            acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
+			        }
 
-            let cap = acct.capabilities.storage.issue<&CapabilityFactory.Manager>(CapabilityFactory.StoragePath)
-            acct.capabilities.publish(cap, at: CapabilityFactory.PublicPath)
-        }
+			        if !acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check() {
+			            acct.capabilities.unpublish(CapabilityFactory.PublicPath)
 
-        assert(
-            acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check(),
-            message: "CapabilityFactory is not setup properly"
-        )
+			            let cap = acct.capabilities.storage.issue<&CapabilityFactory.Manager>(CapabilityFactory.StoragePath)
+			            acct.capabilities.publish(cap, at: CapabilityFactory.PublicPath)
+			        }
 
-        let factory = acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
-        assert(factory.check(), message: "factory address is not configured properly")
+			        assert(
+			            acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check(),
+			            message: "CapabilityFactory is not setup properly"
+			        )
 
-        let filter = acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
-        assert(filter.check(), message: "capability filter is not configured properly")
+			        let factory = acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
+			        assert(factory.check(), message: "factory address is not configured properly")
 
-        owned.publishToParent(parentAddress: parent, factory: factory, filter: filter)
-    }
-}
-					`,
+			        let filter = acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+			        assert(filter.check(), message: "capability filter is not configured properly")
+
+			        owned.publishToParent(parentAddress: parent, factory: factory, filter: filter)
+
+			    }
+			}
+								`,
 					args: (arg, t) => [arg(flowAddress, t.Address)],
 					proposer: magic.flow.authorization,
 					authorizations: [magic.flow.authorization],
@@ -349,41 +349,64 @@ transaction(parent: Address) {
 				);
 			}
 
-			// FIRST TRANSACTION: Setup Parent Account
+			// FIRST TRANSACTION: Claim Child Account
 			// ----------------------------------------
-			console.log('STARTING TRANSACTION 1: Setup Parent Account');
-			console.log('Preparing setup parent transaction...');
+			console.log('STARTING TRANSACTION 1: Claim Child Account');
+			console.log('Preparing claim child transaction...');
+			console.log('Using child address for claim:', user.address);
 
 			let setupTxId;
 			try {
 				setupTxId = await fcl.mutate({
 					cadence: `
-						import HybridCustody from 0xHybridCustody
 						
-						transaction {
-							prepare(acct: AuthAccount) {
-								// Debug logging
-								log("Starting parent setup transaction...")
-								log("Parent account address: ".concat(acct.address.toString()))
-								
-								// Check if parent account already exists
-								if acct.borrow<&HybridCustody.ParentAccount>(from: HybridCustody.ParentAccountStoragePath) != nil {
-									log("ParentAccount already set up, skipping setup")
-									return
-								}
-								
-								// Create new parent account
-								log("Creating ParentAccount resource...")
-								let parentAccount <- HybridCustody.createParentAccount()
-								
-								// Save it to storage
-								log("Saving ParentAccount to storage...")
-								acct.save(<-parentAccount, to: HybridCustody.ParentAccountStoragePath)
-								
-								log("ParentAccount setup complete")
-							}
-						}
+import MetadataViews from 0xMetadataViews
+import ViewResolver from 0xViewResolver
+import HybridCustody from 0xHybridCustody
+import CapabilityFilter from 0xCapabilityFilter
+
+transaction(childAddress: Address) {
+    prepare(acct: auth(Storage, Capabilities, Inbox) &Account) {
+        var filter = getAccount(childAddress).capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+
+        if acct.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) == nil {
+            let m <- HybridCustody.createManager(filter: filter)
+            acct.storage.save(<- m, to: HybridCustody.ManagerStoragePath)
+
+            for c in acct.capabilities.storage.getControllers(forPath: HybridCustody.ManagerStoragePath) {
+                c.delete()
+            }
+
+            acct.capabilities.unpublish(HybridCustody.ManagerPublicPath)
+
+            acct.capabilities.publish(
+                acct.capabilities.storage.issue<&{HybridCustody.ManagerPublic}>(HybridCustody.ManagerStoragePath),
+                at: HybridCustody.ManagerPublicPath
+            )
+
+            acct.capabilities.storage.issue<auth(HybridCustody.Manage) &{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}>(HybridCustody.ManagerStoragePath)
+        }
+
+        let inboxName = HybridCustody.getChildAccountIdentifier(acct.address)
+        let cap = acct.inbox.claim<auth(HybridCustody.Child) &{HybridCustody.AccountPrivate, HybridCustody.AccountPublic, ViewResolver.Resolver}>(inboxName, provider: childAddress)
+            ?? panic("child account cap not found")
+
+        let manager = acct.storage.borrow<auth(HybridCustody.Manage) &HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
+            ?? panic("manager no found")
+
+        manager.addAccount(cap: cap)
+
+        let d = MetadataViews.Display(
+            name: "Waddle Magic Link Wallet",
+            description: "Waddle Magic Link Custodial Wallet",
+            thumbnail: MetadataViews.HTTPFile(url: "https://raw.githubusercontent.com/bz-hashtag-0780/waddle/refs/heads/main/images/waddle_logo.png")
+        )
+
+        manager.setChildAccountDisplay(address: childAddress, d)
+    }
+}
 					`,
+					args: (arg, t) => [arg(user.address, t.Address)],
 					proposer: fcl.authz,
 					authorizations: [fcl.authz],
 					payer: fcl.authz,
@@ -418,70 +441,6 @@ transaction(parent: Address) {
 			} catch (sealError) {
 				console.error(
 					'Error waiting for setup parent transaction to be sealed:',
-					sealError
-				);
-				throw new Error(
-					'Transaction failed to complete. Please try again.'
-				);
-			}
-
-			// SECOND TRANSACTION: Claim Capability
-			// ----------------------------------------
-			console.log('STARTING TRANSACTION 2: Claim Capability');
-			console.log('Preparing claim transaction...');
-			console.log('Using child address for claim:', user.address);
-
-			let claimTxId;
-			try {
-				claimTxId = await fcl.mutate({
-					cadence: `
-						import HybridCustody from 0xHybridCustody
-						
-						transaction(childAddress: Address) {
-							prepare(acct: AuthAccount) {
-								// Debug logging
-								log("Starting claim transaction...")
-								log("Parent account address: ".concat(acct.address.toString()))
-								log("Child address to claim: ".concat(childAddress.toString()))
-								
-								// Borrow parent account
-								let parentAccount = acct.borrow<&HybridCustody.ParentAccount>(from: HybridCustody.ParentAccountStoragePath)
-									?? panic("Could not borrow ParentAccount - did you run setup first?")
-								
-								// Claim child account capability
-								log("Claiming child account capability...")
-								parentAccount.claimChildAccount(childAddress: childAddress)
-								
-								log("Capability claimed successfully")
-							}
-						}
-					`,
-					args: (arg, t) => [arg(user.address, t.Address)],
-					proposer: fcl.authz,
-					authorizations: [fcl.authz],
-					payer: fcl.authz,
-					limit: 999,
-				});
-				console.log('Claim transaction submitted with ID:', claimTxId);
-			} catch (txError: unknown) {
-				console.error('Error submitting claim transaction:', txError);
-				throw new Error(
-					`Claim transaction failed: ${
-						txError instanceof Error
-							? txError.message
-							: 'Unknown error'
-					}`
-				);
-			}
-
-			// Wait for transaction to be sealed
-			console.log('Waiting for claim transaction to be sealed...');
-			try {
-				const claimResult = await fcl.tx(claimTxId).onceSealed();
-				console.log('Claim transaction sealed result:', claimResult);
-			} catch (sealError) {
-				console.error(
-					'Error waiting for claim transaction to be sealed:',
 					sealError
 				);
 				throw new Error(

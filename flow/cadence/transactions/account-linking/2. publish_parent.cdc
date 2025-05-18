@@ -2,9 +2,11 @@ import "HybridCustody"
 import "CapabilityFactory"
 import "CapabilityFilter"
 import "CapabilityDelegator"
+import "HotspotOperatorNFT"
+import "NonFungibleToken"
 						
 transaction(parent: Address) {
-    prepare(acct: auth(Storage, Capabilities) &Account) {
+    prepare(acct: auth(Storage, Capabilities, BorrowValue, StorageCapabilities) &Account) {
         let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("owned account not found")
 
@@ -44,5 +46,6 @@ transaction(parent: Address) {
         assert(filter.check(), message: "capability filter is not configured properly")
 
         owned.publishToParent(parentAddress: parent, factory: factory, filter: filter)
+
     }
 }
