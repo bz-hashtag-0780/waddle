@@ -15,20 +15,17 @@ export const initMagic = () => {
 	if (typeof window === 'undefined') return null;
 
 	if (!magic) {
-		// Get the Flow network configuration - we're using testnet
-		const flowAccessNode = 'https://rest-testnet.onflow.org';
+		// Get the Flow network configuration - we're using mainnet
+		const flowAccessNode = 'https://rest-mainnet.onflow.org';
 
-		magic = new MagicBase(
-			process.env.NEXT_PUBLIC_MAGIC_API_KEY || 'pk_live_demo',
-			{
-				extensions: [
-					new FlowExtension({
-						rpcUrl: flowAccessNode,
-						network: 'testnet',
-					}),
-				],
-			}
-		) as Magic;
+		magic = new MagicBase('pk_live_0EEEBD45455D6970', {
+			extensions: [
+				new FlowExtension({
+					rpcUrl: flowAccessNode,
+					network: 'mainnet',
+				}),
+			],
+		}) as Magic;
 	}
 
 	return magic;

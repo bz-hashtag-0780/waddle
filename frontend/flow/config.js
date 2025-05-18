@@ -3,7 +3,7 @@ import { config } from '@onflow/fcl';
 // Configure FCL for the Flow network
 // Set network to emulator for local development, testnet for testing,
 // or mainnet for production
-const flowNetwork = process.env.NEXT_PUBLIC_FLOW_NETWORK || 'testnet';
+const flowNetwork = process.env.NEXT_PUBLIC_FLOW_NETWORK || 'mainnet';
 
 // FCL configurations
 const fclConfig = {

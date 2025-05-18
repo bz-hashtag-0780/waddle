@@ -3,7 +3,7 @@ import * as fcl from '@onflow/fcl';
 // Configure FCL for Flow mainnet
 fcl.config()
 	.put('accessNode.api', 'https://rest-mainnet.onflow.org')
-	.put('discovery.wallet', 'https://fcl-discovery.onflow.org/mainnet/authn')
+	.put('discovery.wallet', 'https://fcl-discovery.onflow.org/authn')
 	.put('app.detail.title', 'Waddle 5G')
 	.put(
 		'app.detail.icon',

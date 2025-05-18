@@ -38,8 +38,8 @@ export const MagicProvider = ({ children }: { children: ReactNode }) => {
 					{
 						extensions: [
 							new FlowExtension({
-								rpcUrl: 'https://rest-testnet.onflow.org',
-								network: 'testnet',
+								rpcUrl: 'https://rest-mainnet.onflow.org',
+								network: 'mainnet',
 							}),
 						],
 					}
