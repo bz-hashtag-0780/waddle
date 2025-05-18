@@ -13,6 +13,8 @@
 
 **Video Demonstration:** [Watch the Demo Video](https://drive.google.com/drive/folders/1E4zo8F2FCT4-d2DvjQthgoMHA7yh_Qpd?usp=sharing)
 
+**Project Introduction:** [Read Notion Page](https://www.notion.so/flowfoundation/Waddle-1f71aee123248063a03beffeec677018?pvs=4)
+
 ## Overview
 
 Waddle is a decentralized 5G network platform built on the Flow. It addresses the challenges of current 5G infrastructure deployment by enabling individuals to set up and operate mini 5G hotspots, creating a distributed network infrastructure while earning rewards.
