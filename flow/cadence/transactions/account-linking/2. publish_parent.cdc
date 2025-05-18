@@ -4,7 +4,7 @@ import "CapabilityFilter"
 import "CapabilityDelegator"
 						
 transaction(parent: Address) {
-    prepare(acct: auth(Storage) &Account) {
+    prepare(acct: auth(Storage, Capabilities) &Account) {
         let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("owned account not found")
 

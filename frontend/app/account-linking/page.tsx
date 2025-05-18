@@ -140,10 +140,11 @@ transaction {
         }
 
         acct.capabilities.storage.issue<&{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath)
-        acct.capabilities.publish(
-            acct.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath),
-            at: HybridCustody.OwnedAccountPublicPath
-        )
+        // acct.capabilities.publish(
+        //     acct.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath),
+        //     at: HybridCustody.OwnedAccountPublicPath
+        // )
+		//TODO uncomment so new wallets can do it. or have a checker.
     }
 }
 					`,
@@ -216,7 +217,7 @@ import CapabilityFilter from 0xCapabilityFilter
 import CapabilityDelegator from 0xCapabilityDelegator
 						
 transaction(parent: Address) {
-    prepare(acct: auth(Storage) &Account) {
+    prepare(acct: auth(Storage, Capabilities) &Account) {
         let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
             ?? panic("owned account not found")
 
