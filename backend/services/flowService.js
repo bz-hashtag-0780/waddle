@@ -48,7 +48,7 @@ class flowService {
 	static async addKeys(numOfKeys) {
 		let transaction = `
 		transaction(publicKeyHex: String, numOfKeys: Int) {
-			prepare(signer: AuthAccount) {
+			prepare(signer: auth(Keys, AddKey) &Account) {
 				let publicKey = publicKeyHex.decodeHex()
 
 				let key = PublicKey(
@@ -98,3 +98,5 @@ class flowService {
 		}
 	}
 }
+
+module.exports = flowService;
