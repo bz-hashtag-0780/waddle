@@ -11,7 +11,7 @@ access(all) contract HotspotRegistry {
     access(all) event ContractInitialized()
     access(all) event HotspotRegistered(id: UInt64, owner: Address)
     access(all) event HotspotStatusChanged(id: UInt64, online: Bool)
-    access(all) event HotspotLocationUpdated(id: UInt64, lat: UFix64, lng: UFix64)
+    access(all) event HotspotLocationUpdated(id: UInt64, lat: Fix64, lng: Fix64)
 
     // Named paths
     access(all) let AdminStoragePath: StoragePath
@@ -24,8 +24,8 @@ access(all) contract HotspotRegistry {
     access(all) struct Hotspot {
         access(all) let id: UInt64
         access(all) let owner: Address
-        access(all) var lat: UFix64?
-        access(all) var lng: UFix64?
+        access(all) var lat: Fix64?
+        access(all) var lng: Fix64?
         access(all) var online: Bool
         access(all) var lastUpdated: UFix64
         access(all) var totalUptime: UFix64
@@ -35,13 +35,13 @@ access(all) contract HotspotRegistry {
             self.owner = owner
             self.lat = nil
             self.lng = nil
-            self.online = false
+            self.online = true
             self.lastUpdated = getCurrentBlock().timestamp
             self.totalUptime = 0.0
         }
 
         // Setter methods
-        access(all) fun setLatLng(lat: UFix64, lng: UFix64) {
+        access(all) fun setLatLng(lat: Fix64, lng: Fix64) {
             self.lat = lat
             self.lng = lng
         }
@@ -91,7 +91,7 @@ access(all) contract HotspotRegistry {
         }
 
         // Update hotspot location
-        access(all) fun updateHotspotLocation(id: UInt64, lat: UFix64, lng: UFix64) {
+        access(all) fun updateHotspotLocation(id: UInt64, lat: Fix64, lng: Fix64) {
             if var hotspot = &HotspotRegistry.hotspots[id] as &Hotspot? {
                 // Update location using the setter method
                 hotspot.setLatLng(lat: lat, lng: lng)

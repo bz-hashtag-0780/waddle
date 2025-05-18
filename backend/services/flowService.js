@@ -180,6 +180,90 @@ transaction(nftID: UInt64, lat: UFix64, lng: UFix64) {
 		}
 	}
 
+	static async updateHotspotStatus(nftID, online) {
+		let transaction = `
+
+import HotspotRegistry from 0xHotspotRegistry
+
+transaction(nftID: UInt64, online: Bool) {
+    prepare(acct: auth(Storage) &Account) {
+
+        let adminRef = acct.storage.borrow<&HotspotRegistry.Admin>(from: HotspotRegistry.AdminStoragePath)?? panic("Could not borrow Admin reference")
+        
+        adminRef.updateHotspotStatus(id: nftID, online: online)
+
+    }
+}
+
+        `;
+		let keyIndex = null;
+		for (const [key, value] of Object.entries(this.AdminKeys)) {
+			if (value == false) {
+				keyIndex = parseInt(key);
+				break;
+			}
+		}
+		if (keyIndex == null) {
+			return;
+		}
+
+		this.AdminKeys[keyIndex] = true;
+		const signer = await this.getAdminAccountWithKeyIndex(keyIndex);
+		try {
+			const txid = await signer.sendTransaction(transaction, (arg, t) => [
+				arg(nftID, t.UInt64),
+				arg(online, t.Bool),
+			]);
+
+			if (txid) {
+				let tx = await fcl.tx(txid).onceSealed();
+				this.AdminKeys[keyIndex] = false;
+				console.log('Txn Sealed!');
+			}
+		} catch (e) {
+			this.AdminKeys[keyIndex] = false;
+			console.log(e);
+			return;
+		}
+	}
+
+	// Prove admin key rotation cycling works
+	static async adminTxnTest() {
+		let transaction = `
+
+transaction() {
+    prepare(acct: auth(Storage) &Account) {    }
+}
+
+        `;
+		let keyIndex = null;
+		for (const [key, value] of Object.entries(this.AdminKeys)) {
+			if (value == false) {
+				keyIndex = parseInt(key);
+				break;
+			}
+		}
+		if (keyIndex == null) {
+			return;
+		}
+
+		this.AdminKeys[keyIndex] = true;
+		const signer = await this.getAdminAccountWithKeyIndex(keyIndex);
+		try {
+			const txid = await signer.sendTransaction(transaction);
+
+			if (txid) {
+				let tx = await fcl.tx(txid).onceSealed();
+				this.AdminKeys[keyIndex] = false;
+				console.log('Txn Sealed!');
+			}
+		} catch (e) {
+			this.AdminKeys[keyIndex] = false;
+			console.log(e);
+			return;
+		}
+	}
+
 	// end of class
 }
 

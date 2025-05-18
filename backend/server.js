@@ -19,6 +19,11 @@ async function processHotspotsLocations() {
 	console.log(allHotspots);
 }
 
+async function processHotspotsOnlineStatus() {
+	const allHotspots = await flowService.getAllHotspots();
+	console.log(allHotspots);
+}
+
 app.listen(PORT, async () => {
 	console.log(`Server is running on port ${PORT}`);
 	// await flowService.addKeys(500);
@@ -28,4 +33,14 @@ app.listen(PORT, async () => {
 	// 	'49.246292',
 	// 	'123.116226'
 	// );
+	await flowService.updateHotspotStatus('27487790823746', true);
+
+	//// Prove admin key rotation cycling works
+	// flowService.adminTxnTest();
+	// flowService.adminTxnTest();
+	// flowService.adminTxnTest();
+	// flowService.adminTxnTest();
+	// flowService.adminTxnTest();
+	// flowService.adminTxnTest();
+	// flowService.adminTxnTest();
 });

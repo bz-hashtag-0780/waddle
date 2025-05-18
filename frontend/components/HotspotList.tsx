@@ -121,12 +121,12 @@ const HotspotList: React.FC<HotspotListProps> = ({
 								</div>
 							</div>
 						</div>
-						<Link
+						{/* <Link
 							href={`/hotspots/${hotspot.id}`}
 							className="text-sm text-[rgb(117,206,254)] hover:text-blue-500"
 						>
 							View Details
-						</Link>
+						</Link> */}
 					</div>
 				</Card>
 			))}

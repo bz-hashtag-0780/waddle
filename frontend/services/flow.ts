@@ -563,14 +563,12 @@ export const getFIVEGCOINBalance = async (address: string): Promise<number> => {
 		console.log('Getting FIVEGCOIN balance for address:', address);
 
 		// For demonstration purposes, return a hardcoded value
-		// based on the first character of the address to make it unique per user
-		const firstChar = address.charAt(2); // Skip 0x prefix
-		const mockBalance = parseInt(firstChar, 16) || 1;
-		return 100 + mockBalance * 10; // Higher than FLOW to make it obvious
+
+		return 0; // Higher than FLOW to make it obvious
 	} catch (error) {
 		console.error('Error getting FIVEGCOIN balance:', error);
 		// Return a default value on error
-		return 100.0;
+		return 0.0;
 	}
 };
 
