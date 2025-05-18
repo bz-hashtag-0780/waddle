@@ -26,14 +26,9 @@ function generateRandomLocation() {
 	const lat = (Math.random() * (60 - 24) + 24).toFixed(8);
 
 	// Random longitude (-170° to -50° W in standard format)
-	const standardLng = (Math.random() * (-50 - -170) + -170).toFixed(8);
+	const lng = (Math.random() * (-50 - -170) + -170).toFixed(8);
 
-	// Normalize longitude for contract (will be between 190° and 310°)
-	const normalizedLng = normalizeLongitude(parseFloat(standardLng)).toFixed(
-		8
-	);
-
-	return { lat, lng: normalizedLng };
+	return { lat, lng };
 }
 
 async function processHotspotsLocations() {
