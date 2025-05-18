@@ -109,7 +109,7 @@ export default function AccountLinkingPage() {
 				await fcl.currentUser().snapshot()
 			);
 
-			// FIRST TRANSACTION: Setup Child Account
+			// FIRST TRANSACTION: Setup Child Account - Works
 			// ----------------------------------------
 			console.log('STARTING TRANSACTION 1: Setup Child Account');
 			console.log('Preparing transaction...');
@@ -117,39 +117,35 @@ export default function AccountLinkingPage() {
 			let setupTxId;
 			try {
 				setupTxId = await fcl.mutate({
-					cadence: `
-						import HybridCustody from 0xHybridCustody
-						import MetadataViews from 0xMetadataViews
-						
-						transaction {
-							prepare(acct: AuthAccount) {
-								// Debug logging
-								log("Starting setup transaction...")
-								log("Account address: ".concat(acct.address.toString()))
-								
-								// Check if ChildAccount already exists
-								if acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildAccountStoragePath) != nil {
-									log("ChildAccount already set up, skipping setup")
-									return
-								}
-								
-								// Create a ChildAccount resource
-								log("Creating ChildAccount resource...")
-								let childAccount <- HybridCustody.createChildAccount()
-								
-								// Save it to storage
-								log("Saving ChildAccount to storage...")
-								acct.save(<-childAccount, to: HybridCustody.ChildAccountStoragePath)
-								
-								// Create public capability - Using updated Cadence syntax
-								log("Creating public capability...")
-								// Using intersection type instead of restricted type
-								let cap = acct.capabilities.storage.issue<&HybridCustody.ChildAccount & HybridCustody.ChildAccountPublic>(HybridCustody.ChildAccountStoragePath)
-								acct.capabilities.publish(cap, at: HybridCustody.ChildAccountPublicPath)
-								
-								log("ChildAccount setup complete")
-							}
-						}
+					cadence: `	
+import ViewResolver from 0xViewResolver
+import HybridCustody from 0xHybridCustody
+import MetadataViews from 0xMetadataViews
+
+transaction {
+    prepare(acct: auth(Storage, Capabilities) &Account) {
+        let acctCap = acct.capabilities.account.issue<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>()
+
+        if acct.storage.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) == nil {
+            let ownedAccount <- HybridCustody.createOwnedAccount(acct: acctCap)
+            acct.storage.save(<-ownedAccount, to: HybridCustody.OwnedAccountStoragePath)
+        }
+
+        let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+            ?? panic("owned account not found")
+
+        // check that paths are all configured properly
+        for c in acct.capabilities.storage.getControllers(forPath: HybridCustody.OwnedAccountStoragePath) {
+            c.delete()
+        }
+
+        acct.capabilities.storage.issue<&{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath)
+        acct.capabilities.publish(
+            acct.capabilities.storage.issue<&{HybridCustody.OwnedAccountPublic, ViewResolver.Resolver}>(HybridCustody.OwnedAccountStoragePath),
+            at: HybridCustody.OwnedAccountPublicPath
+        )
+    }
+}
 					`,
 					proposer: magic.flow.authorization,
 					authorizations: [magic.flow.authorization],
@@ -214,26 +210,54 @@ export default function AccountLinkingPage() {
 			try {
 				publishTxId = await fcl.mutate({
 					cadence: `
-						import HybridCustody from 0xHybridCustody
+import HybridCustody from 0xHybridCustody
+import CapabilityFactory from 0xCapabilityFactory
+import CapabilityFilter from 0xCapabilityFilter
+import CapabilityDelegator from 0xCapabilityDelegator
 						
-						transaction(parentAddress: Address) {
-							prepare(acct: AuthAccount) {
-								// Debug logging
-								log("Starting publish transaction...")
-								log("Account address: ".concat(acct.address.toString()))
-								log("Parent address: ".concat(parentAddress.toString()))
-								
-								// Borrow child account
-								let childAccount = acct.borrow<&HybridCustody.ChildAccount>(from: HybridCustody.ChildAccountStoragePath)
-									?? panic("Could not borrow ChildAccount - did you run setup first?")
-								
-								// Add parent account to list of authorized parents
-								log("Publishing to parent...")
-								childAccount.publishToParent(parentAddress: parentAddress)
-								
-								log("Capability published to parent successfully")
-							}
-						}
+transaction(parent: Address) {
+    prepare(acct: auth(Storage) &Account) {
+        let owned = acct.storage.borrow<auth(HybridCustody.Owner) &HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath)
+            ?? panic("owned account not found")
+
+        if acct.storage.borrow<&CapabilityFilter.AllowAllFilter>(from: CapabilityFilter.StoragePath) == nil {
+            acct.storage.save(<- CapabilityFilter.createFilter(Type<@CapabilityFilter.AllowAllFilter>()), to: CapabilityFilter.StoragePath)
+        }
+
+        acct.capabilities.unpublish(CapabilityFilter.PublicPath)
+        acct.capabilities.publish(
+            acct.capabilities.storage.issue<&{CapabilityFilter.Filter}>(CapabilityFilter.StoragePath),
+            at: CapabilityFilter.PublicPath
+        )
+
+        assert(acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath).check(), message: "failed to setup filter")
+
+        if acct.storage.borrow<&AnyResource>(from: CapabilityFactory.StoragePath) == nil {
+            let f <- CapabilityFactory.createFactoryManager()
+            acct.storage.save(<-f, to: CapabilityFactory.StoragePath)
+        }
+
+        if !acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check() {
+            acct.capabilities.unpublish(CapabilityFactory.PublicPath)
+
+            let cap = acct.capabilities.storage.issue<&CapabilityFactory.Manager>(CapabilityFactory.StoragePath)
+            acct.capabilities.publish(cap, at: CapabilityFactory.PublicPath)
+        }
+
+        assert(
+            acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath).check(),
+            message: "CapabilityFactory is not setup properly"
+        )
+
+        let factory = acct.capabilities.get<&CapabilityFactory.Manager>(CapabilityFactory.PublicPath)
+        assert(factory.check(), message: "factory address is not configured properly")
+
+        let filter = acct.capabilities.get<&{CapabilityFilter.Filter}>(CapabilityFilter.PublicPath)
+        assert(filter.check(), message: "capability filter is not configured properly")
+
+        owned.publishToParent(parentAddress: parent, factory: factory, filter: filter)
+    }
+}
 					`,
 					args: (arg, t) => [arg(flowAddress, t.Address)],
 					proposer: magic.flow.authorization,
