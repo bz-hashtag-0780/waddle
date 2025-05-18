@@ -84,8 +84,70 @@ async function processHotspotsLocations() {
 }
 
 async function processHotspotsOnlineStatus() {
-	const allHotspots = await flowService.getAllHotspots();
-	console.log(allHotspots);
+	try {
+		console.log('Starting hotspot online status processing...');
+
+		// 1. Fetch all hotspots
+		const allHotspots = await flowService.getAllHotspots();
+		console.log(
+			`Retrieved ${allHotspots.length} hotspots for status update`
+		);
+
+		// 2. Process each hotspot's online status
+		for (const hotspot of allHotspots) {
+			try {
+				// First turn the hotspot offline
+				console.log(
+					`Setting hotspot ID: ${hotspot.id} to offline status`
+				);
+				const offlineTxResult = flowService.updateHotspotStatus(
+					hotspot.id,
+					false
+				);
+
+				console.log(
+					`Successfully toggled status offline for hotspot ID: ${hotspot.id}`
+				);
+			} catch (statusError) {
+				console.error(
+					`Failed to update status for hotspot ID: ${hotspot.id}`,
+					statusError
+				);
+				// Continue with next hotspot even if one fails
+			}
+		}
+
+		// Wait a short period to ensure transaction has time to process
+		await new Promise((resolve) => setTimeout(resolve, 5000));
+
+		// 3. Process each hotspot's online status
+		for (const hotspot of allHotspots) {
+			try {
+				// Turn the hotspot online
+				console.log(
+					`Setting hotspot ID: ${hotspot.id} to online status`
+				);
+				const onlineTxResult = flowService.updateHotspotStatus(
+					hotspot.id,
+					true
+				);
+
+				console.log(
+					`Successfully toggled status online for hotspot ID: ${hotspot.id}`
+				);
+			} catch (statusError) {
+				console.error(
+					`Failed to update status for hotspot ID: ${hotspot.id}`,
+					statusError
+				);
+				// Continue with next hotspot even if one fails
+			}
+		}
+
+		console.log('Hotspot online status processing completed');
+	} catch (error) {
+		console.error('Error in processHotspotsOnlineStatus:', error);
+	}
 }
 
 // Set up recurring process every 10 minutes
@@ -99,25 +161,24 @@ function setupLocationProcessingScheduler() {
 	console.log('Hotspot location processor scheduled to run every 10 minutes');
 }
 
+// Set up recurring process for online status toggling (every hour)
+function setupStatusProcessingScheduler() {
+	// Run with a slight delay after startup to avoid conflict with location processing
+	setTimeout(() => {
+		processHotspotsOnlineStatus();
+
+		// Then schedule to run every hour (3600000 ms)
+		setInterval(processHotspotsOnlineStatus, 10 * 60 * 1000);
+	}, 30000); // 30 second initial delay
+
+	console.log('Hotspot status processor scheduled to run every hour');
+}
+
 app.listen(PORT, async () => {
 	console.log(`Server is running on port ${PORT}`);
 	// await flowService.addKeys(500);
-	hotspots = await flowService.getAllHotspots();
-	console.log(hotspots);
-	// await flowService.updateHotspotLocation(
-	// 	'27487790823746',
-	// 	'49.246292',
-	// 	'123.116226'
-	// );
-	// await flowService.updateHotspotStatus('27487790823746', false);
-	// setupLocationProcessingScheduler();
-
-	//// Prove admin key rotation cycling works
-	// flowService.adminTxnTest();
-	// flowService.adminTxnTest();
-	// flowService.adminTxnTest();
-	// flowService.adminTxnTest();
-	// flowService.adminTxnTest();
-	// flowService.adminTxnTest();
-	// flowService.adminTxnTest();
+	// hotspots = await flowService.getAllHotspots();
+	// console.log(hotspots);
+	setupLocationProcessingScheduler();
+	setupStatusProcessingScheduler();
 });

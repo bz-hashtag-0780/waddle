@@ -171,7 +171,7 @@ transaction(nftID: UInt64, lat: UFix64, lng: UFix64) {
 			if (txid) {
 				let tx = await fcl.tx(txid).onceSealed();
 				this.AdminKeys[keyIndex] = false;
-				console.log('Txn Sealed!');
+				console.log('Txn Sealed! ' + txid);
 			}
 		} catch (e) {
 			this.AdminKeys[keyIndex] = false;
@@ -218,7 +218,7 @@ transaction(nftID: UInt64, online: Bool) {
 			if (txid) {
 				let tx = await fcl.tx(txid).onceSealed();
 				this.AdminKeys[keyIndex] = false;
-				console.log('Txn Sealed!');
+				console.log('Txn Sealed! ' + txid);
 			}
 		} catch (e) {
 			this.AdminKeys[keyIndex] = false;
@@ -255,7 +255,7 @@ transaction() {
 			if (txid) {
 				let tx = await fcl.tx(txid).onceSealed();
 				this.AdminKeys[keyIndex] = false;
-				console.log('Txn Sealed!');
+				console.log('Txn Sealed! ' + txid);
 			}
 		} catch (e) {
 			this.AdminKeys[keyIndex] = false;
