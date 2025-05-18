@@ -127,6 +127,60 @@ access(all) fun main(): [HotspotRegistry.Hotspot] {
 
 		return allHotspots;
 	}
+
+	static async updateHotspotLocation(nftID, lat, lng) {
+		let transaction = `
+
+import "HotspotRegistry"
+
+transaction(nftID: UInt64, lat: UFix64, lng: UFix64) {
+    prepare(acct: auth(Storage) &Account) {
+
+        let adminRef = acct.storage.borrow<&HotspotRegistry.Admin>(from: HotspotRegistry.AdminStoragePath)?? panic("Could not borrow Admin reference")
+        
+        adminRef.updateHotspotLocation(
+            id: nftID,
+            lat: lat,
+            lng: lng
+        )
+
+    }
+}
+
+        `;
+		let keyIndex = null;
+		for (const [key, value] of Object.entries(this.AdminKeys)) {
+			if (value == false) {
+				keyIndex = parseInt(key);
+				break;
+			}
+		}
+		if (keyIndex == null) {
+			return;
+		}
+
+		this.AdminKeys[keyIndex] = true;
+		const signer = await this.getAdminAccountWithKeyIndex(keyIndex);
+		try {
+			const txid = await signer.sendTransaction(transaction, (arg, t) => [
+				arg(nftID, t.UInt64),
+				arg(lat, t.UFix64),
+				arg(lng, t.UFix64),
+			]);
+
+			if (txid) {
+				let tx = await fcl.tx(txid).onceSealed();
+				this.AdminKeys[keyIndex] = false;
+				console.log('Txn Sealed!');
+			}
+		} catch (e) {
+			this.AdminKeys[keyIndex] = false;
+			console.log(e);
+			return;
+		}
+	}
+
+	// end of class
 }
 
 module.exports = flowService;
