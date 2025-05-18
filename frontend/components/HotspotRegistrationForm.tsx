@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Button from './Button';
 import Card from './Card';
-import { getUserNFTs, registerHotspotComplete } from '@/services/flow';
+import {
+	getUserNFTs,
+	registerHotspotComplete,
+	getAllHotspots,
+} from '@/services/flow';
 import { useMagic } from '@/contexts/MagicContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -24,6 +28,7 @@ interface NFT {
 		balance: string;
 		uuid: string;
 	};
+	isRegistered?: boolean; // Added to track registration status
 }
 
 const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
@@ -39,34 +44,79 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 	const [transactionId, setTransactionId] = useState<string | null>(null);
 	const [hotspotId, setHotspotId] = useState<string | null>(null);
 
-	// Fetch user's NFTs
+	// Fetch hotspots and user's NFTs
 	useEffect(() => {
-		const fetchNFTs = async () => {
+		const fetchData = async () => {
 			if (!user?.address) return;
 
 			try {
 				setIsLoading(true);
+
+				// Fetch all registered hotspots
+				const hotspots = await getAllHotspots();
+
+				// Count how many hotspots the user owns
+				const userHotspotCount = hotspots.filter(
+					(hotspot) => hotspot.owner === user.address
+				).length;
+
+				console.log(`User owns ${userHotspotCount} hotspots`);
+
+				// Fetch user's NFTs
 				const userNFTs = await getUserNFTs(user.address);
-				setNfts(userNFTs);
-				if (userNFTs.length > 0) {
-					// Get the ID from the first NFT, handling object case
+				console.log(`User has ${userNFTs.length} NFTs`);
+
+				// Sort NFTs by ID to ensure consistent ordering
+				const sortedNFTs = [...userNFTs].sort((a, b) => {
+					const idA =
+						typeof a.id === 'object'
+							? Number(a.id.id)
+							: Number(a.id);
+					const idB =
+						typeof b.id === 'object'
+							? Number(b.id.id)
+							: Number(b.id);
+					return idA - idB;
+				});
+
+				// Mark NFTs as registered based on position
+				// This assumes the first N NFTs (by ID) were used to register the N hotspots
+				const markedNFTs = sortedNFTs.map((nft, index) => {
+					// Mark the first userHotspotCount NFTs as registered
+					const isRegistered = index < userHotspotCount;
+					return { ...nft, isRegistered };
+				});
+
+				setNfts(markedNFTs);
+
+				// Set default selection to first unregistered NFT if available
+				const firstUnregisteredNft = markedNFTs.find(
+					(nft) => !nft.isRegistered
+				);
+				if (firstUnregisteredNft) {
 					const firstNftId =
-						typeof userNFTs[0].id === 'object'
-							? userNFTs[0].id.id
-							: userNFTs[0].id;
-					// Select first NFT by default
+						typeof firstUnregisteredNft.id === 'object'
+							? firstUnregisteredNft.id.id
+							: firstUnregisteredNft.id;
+					setSelectedNftId(Number(firstNftId));
+				} else if (markedNFTs.length > 0) {
+					// Otherwise select first NFT
+					const firstNftId =
+						typeof markedNFTs[0].id === 'object'
+							? markedNFTs[0].id.id
+							: markedNFTs[0].id;
 					setSelectedNftId(Number(firstNftId));
 				}
 			} catch (err) {
-				console.error('Error fetching NFTs:', err);
-				setError('Failed to load your NFTs. Please try again.');
+				console.error('Error fetching data:', err);
+				setError('Failed to load data. Please try again.');
 			} finally {
 				setIsLoading(false);
 			}
 		};
 
 		if (user) {
-			fetchNFTs();
+			fetchData();
 		}
 	}, [user]);
 
@@ -81,6 +131,19 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 		// Form validation
 		if (selectedNftId === null) {
 			setError('Please select an NFT to use for hotspot registration.');
+			return;
+		}
+
+		// Check if the selected NFT is already registered
+		const selectedNft = nfts.find((nft) => {
+			const nftId = typeof nft.id === 'object' ? nft.id.id : nft.id;
+			return Number(nftId) === selectedNftId;
+		});
+
+		if (selectedNft?.isRegistered) {
+			setError(
+				'This NFT is already registered to a hotspot. Please select a different NFT.'
+			);
 			return;
 		}
 
@@ -193,14 +256,24 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 										typeof nft.id === 'object'
 											? nft.id.id
 											: nft.id;
+
 									return (
 										<option
 											key={String(nftId)}
 											value={nftId}
+											className={
+												nft.isRegistered
+													? 'text-gray-400'
+													: ''
+											}
+											disabled={nft.isRegistered}
 										>
 											{nft.metadata?.name ||
 												'Unnamed NFT'}{' '}
 											(ID: {nftId})
+											{nft.isRegistered
+												? ' - Already Registered'
+												: ''}
 										</option>
 									);
 								})}
@@ -213,6 +286,12 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 							The admin will assign location details to this
 							hotspot later.
 						</p>
+						{nfts.some((nft) => nft.isRegistered) && (
+							<p className="mt-1 text-yellow-600">
+								NFTs already registered to hotspots are disabled
+								and cannot be used again.
+							</p>
+						)}
 					</div>
 
 					{renderTransactionInfo()}
