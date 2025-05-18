@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as fcl from '@onflow/fcl';
 import { Hotspot, UptimeStats } from '../types/flow';
 import { Magic as MagicBase } from 'magic-sdk';
@@ -5,15 +6,6 @@ import { FlowExtension } from '@magic-ext/flow';
 
 // Define Magic type correctly
 export type Magic = MagicBase<[FlowExtension]>;
-
-// Contract addresses (updated with testnet deployed contract addresses)
-const CONTRACT_ADDRESSES = {
-	HotspotOperatorNFT: '0xcc6a3536f37381a2',
-	HotspotRegistry: '0xcc6a3536f37381a2',
-	UptimeProof: '0xcc6a3536f37381a2',
-	FIVEGCOIN: '0xcc6a3536f37381a2',
-	RandomPicker: '0xcc6a3536f37381a2',
-};
 
 // Define an interface for raw NFT data coming from the blockchain
 interface RawNFTData {
@@ -31,6 +23,25 @@ interface RawNFTData {
 	rewardsVault?: {
 		balance: string;
 		uuid: string;
+	};
+}
+
+// Add an interface for Flow event types
+interface FlowEvent {
+	type: string;
+	transactionId: string;
+	transactionIndex: number;
+	eventIndex: number;
+	data: {
+		id?: string | number;
+		[key: string]: any;
+	};
+}
+
+// Define Magic instance type
+interface MagicInstance {
+	flow: {
+		authorization: any;
 	};
 }
 
@@ -224,44 +235,88 @@ export const mintHotspotOperatorNFT = async (
 	}
 };
 
-// Register a new hotspot (simulation mode)
+// Register a new hotspot
 export const registerHotspot = async (
-	lat: number,
-	lng: number
+	magic: MagicInstance,
+	nftID: number
 ): Promise<string> => {
 	try {
+		console.log(`Registering hotspot, nft id: "${nftID}"`);
+
 		const transactionId = await fcl.mutate({
 			cadence: `
-        import HotspotRegistry from ${CONTRACT_ADDRESSES.HotspotRegistry}
+import HotspotRegistry
+import HotspotOperatorNFT
 
-        transaction(lat: UFix64, lng: UFix64) {
-          let adminRef: &HotspotRegistry.Admin
-          
-          prepare(signer: AuthAccount) {
-            self.adminRef = signer.borrow<&HotspotRegistry.Admin>(
-              from: HotspotRegistry.AdminStoragePath
-            ) ?? panic("Could not borrow admin reference")
-          }
-          
-          execute {
-            // For simulation, we'll just log the action
-            log("Simulating registering hotspot at coordinates: ".concat(lat.toString()).concat(", ").concat(lng.toString()))
-          }
-        }
+transaction(nftID: UInt64) {
+    prepare(acct: auth(Storage) &Account) {
+
+        let collectionRef: &HotspotOperatorNFT.Collection = acct.storage.borrow<&HotspotOperatorNFT.Collection>(from: HotspotOperatorNFT.CollectionStoragePath)?? panic("Could not borrow operator collection reference")
+        
+        let nft <- HotspotRegistry.registerHotspot(
+            owner: acct.address,
+            hotspotOperatorNFT: <-collectionRef.withdraw(withdrawID: nftID) as! @HotspotOperatorNFT.NFT
+        )
+
+        collectionRef.deposit(token: <-nft)
+    }
+}
       `,
-			args: (arg, t) => [
-				arg(lat.toFixed(6), t.UFix64),
-				arg(lng.toFixed(6), t.UFix64),
-			],
-			payer: fcl.authz,
-			proposer: fcl.authz,
-			authorizations: [fcl.authz],
+			args: (arg, t) => [arg(nftID, t.UInt64)],
+			payer: magic.flow.authorization,
+			proposer: magic.flow.authorization,
+			authorizations: [magic.flow.authorization],
 			limit: 999,
 		});
 
+		console.log(
+			`Hotspot registration transaction submitted: ${transactionId}`
+		);
 		return transactionId;
 	} catch (error) {
 		console.error('Error registering hotspot:', error);
+		throw error;
+	}
+};
+
+// Complete hotspot registration process (submit and wait for sealing)
+export const registerHotspotComplete = async (
+	magic: MagicInstance,
+	nftID: number
+): Promise<{ transactionId: string; hotspotId?: string }> => {
+	try {
+		// Submit the registration transaction
+		const transactionId = await registerHotspot(magic, nftID);
+
+		console.log(
+			`Waiting for hotspot registration transaction ${transactionId} to be sealed...`
+		);
+
+		// Wait for the transaction to be sealed
+		const txResult = await fcl.tx(transactionId).onceSealed();
+		console.log('Hotspot registration transaction sealed:', txResult);
+
+		// Try to extract the hotspot ID from transaction events
+		const hotspotRegisteredEvent = txResult.events.find(
+			(event: FlowEvent) =>
+				event.type.includes('HotspotRegistry.HotspotRegistered')
+		);
+
+		let hotspotId: string | undefined;
+
+		if (hotspotRegisteredEvent) {
+			hotspotId = hotspotRegisteredEvent.data.id.toString();
+			console.log(`Extracted hotspot ID from event: ${hotspotId}`);
+		} else {
+			console.log('No HotspotRegistered event found in transaction');
+		}
+
+		return {
+			transactionId,
+			hotspotId,
+		};
+	} catch (error) {
+		console.error('Error in complete hotspot registration process:', error);
 		throw error;
 	}
 };
