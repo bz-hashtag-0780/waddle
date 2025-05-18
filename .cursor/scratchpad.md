@@ -418,67 +418,31 @@ The NFT functionality is now complete and integrated with the Flow blockchain.
 
 ## Project Status Board
 
-### MVP Features
+✅ **COMPLETED**: Set up project structure and initial components  
+✅ **COMPLETED**: Set up Flow contract deployment process  
+✅ **COMPLETED**: Set up testing infrastructure  
+✅ **COMPLETED**: Implement Flow contract interactions  
+✅ **COMPLETED**: Implement NFT minting capability  
+✅ **COMPLETED**: Create NFT rendering component  
+✅ **COMPLETED**: Design and create dashboard UI  
+✅ **COMPLETED**: Set up basic navigation structure  
+✅ **COMPLETED**: Implement Map visualization  
+✅ **COMPLETED**: Implement hotspot detail pages  
+✅ **COMPLETED**: Connect frontend to Flow blockchain  
+✅ **COMPLETED**: Implement Magic.link authentication  
+✅ **COMPLETED**: Set up email login  
+✅ **COMPLETED**: Account linking (Flow wallet + Magic.link)  
+🟧 **IN PROGRESS**: Hotspot Registration Flow with Magic.link authorization
 
--   [x] Account Setup with Email
--   [x] Account Linking to Web3 Wallet
--   [ ] Hotspot Registration Flow
-    -   [x] Analyze the existing implementation
-    -   [x] Modify transaction service to use Magic.link authorization
-    -   [x] Create/update the registration form
-    -   [x] Implement the transaction flow
-    -   [x] Add registration to dashboard
-    -   [ ] Test end-to-end flow
--   [ ] Hotspot Management Dashboard
--   [ ] Uptime Proof Submission
--   [ ] Network Visualization
-
-### Smart Contracts
-
--   [COMPLETED] NFT contract for hotspot operators ✅
--   [COMPLETED] Hotspot registry contract ✅
--   [COMPLETED] Uptime proof submission system ✅
--   [COMPLETED] Reward token contract (FIVEGCOIN) ✅
--   [COMPLETED] Deploy all contracts to testnet ✅
--   [COMPLETED] NFT minting transactions (commit & reveal) ✅
-
-### Frontend (Current Progress)
-
--   [COMPLETED] Next.js project setup ✅
--   [COMPLETED] Component and page structure ✅
--   [COMPLETED] Import path fixes ✅
--   [COMPLETED] Magic Link authentication setup ✅
--   [COMPLETED] FCL configuration for testnet ✅
--   [COMPLETED] Fix Magic Link authentication errors ✅
--   [COMPLETED] Implement dashboard with real FLOW balance display ✅
--   [COMPLETED] Implement NFT minting interface ✅
--   [COMPLETED] Fix NFT collection viewer display issues ✅
--   [COMPLETED] Implement auto-refresh after NFT reveal transaction ✅
--   [COMPLETED] Implement Refresh Collection button functionality ✅
--   [COMPLETED] Fix layout consistency for NFTs page ✅
--   [COMPLETED] Apply shared header and footer to NFTs page ✅
--   [COMPLETED] Implement account linking feature ✅
--   [COMPLETED] Create multi-step UI flow for account linking ✅
--   [COMPLETED] Integrate with Flow Wallet for account linking ✅
--   [IN PROGRESS] Fix account linking transactions to use proper address aliases and Cadence types ✅
--   [IN PROGRESS] Complete hotspot registration flow
-    -   [TO DO] Analyze existing hotspot registration implementation
-    -   [TO DO] Modify transaction service to use Magic.link authorization
-    -   [TO DO] Create/update hotspot registration form component
-    -   [TO DO] Implement transaction flow with proper states
-    -   [TO DO] Integrate registration process into dashboard
-    -   [TO DO] Test end-to-end registration flow
--   [PLANNED] Finalize network visualization
-
-### Integration & Deployment
-
--   [COMPLETED] Fix TypeScript type definitions ✅
--   [COMPLETED] Contract deployment to testnet ✅
--   [COMPLETED] NFT transaction implementation ✅
--   [IN PROGRESS] Frontend-contract integration
--   [ ] Hosting setup (Vercel)
--   [ ] Final testing and bug fixes
--   [ ] Demo preparation and documentation
+-   ✅ Analyze existing implementation
+-   ✅ Modify transaction service to use Magic.link authorization
+-   🟧 Update registration form component
+-   🟧 Implement transaction flow
+-   🟧 Add registration to dashboard
+-   🟧 Test end-to-end flow
+    ✅ **COMPLETED**: Fix HotspotList coordinate error with null checks
+    ✅ **COMPLETED**: Fix NFT ownership detection in dashboard to use blockchain query instead of mock implementation
+    🟧 **IN PROGRESS**: Testing and bug fixing
 
 ## High Priority Tasks (Next Steps)
 

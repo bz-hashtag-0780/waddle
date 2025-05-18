@@ -29,6 +29,8 @@ const DashboardPage = () => {
 	const [registeredHotspotId, setRegisteredHotspotId] = useState<
 		string | null
 	>(null);
+	const [lastChecked, setLastChecked] = useState<string>('');
+	const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
 	useEffect(() => {
 		// Check for registration success parameter
@@ -55,6 +57,27 @@ const DashboardPage = () => {
 		}
 	}, [user, authLoading, router]);
 
+	const refreshNFTStatus = async () => {
+		try {
+			if (!user?.address) return;
+
+			setIsRefreshing(true);
+			console.log('Manually checking NFT ownership for:', user.address);
+
+			const ownsNFT = await checkHotspotOperatorNFTOwnership(
+				user.address
+			);
+			console.log('NFT ownership check result:', ownsNFT);
+
+			setHasNFT(ownsNFT);
+			setLastChecked(new Date().toLocaleTimeString());
+		} catch (error) {
+			console.error('Error refreshing NFT status:', error);
+		} finally {
+			setIsRefreshing(false);
+		}
+	};
+
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
@@ -65,7 +88,9 @@ const DashboardPage = () => {
 					const ownsNFT = await checkHotspotOperatorNFTOwnership(
 						user.address
 					);
+					console.log('Initial NFT ownership check result:', ownsNFT);
 					setHasNFT(ownsNFT);
+					setLastChecked(new Date().toLocaleTimeString());
 
 					// Get user's token balance
 					const tokenBalance = await getFIVEGCOINBalance(
@@ -170,6 +195,17 @@ const DashboardPage = () => {
 						</h1>
 						<p className="mt-1 text-sm text-gray-500">
 							Manage your 5G hotspots and view rewards
+						</p>
+						<p className="mt-1 text-xs text-gray-400">
+							NFT Status: {hasNFT ? 'Has NFT' : 'No NFT'} (Last
+							checked: {lastChecked})
+							<button
+								onClick={refreshNFTStatus}
+								disabled={isRefreshing}
+								className="ml-2 text-blue-500 underline"
+							>
+								{isRefreshing ? 'Checking...' : 'Refresh'}
+							</button>
 						</p>
 					</div>
 					<div className="mt-4 md:mt-0">

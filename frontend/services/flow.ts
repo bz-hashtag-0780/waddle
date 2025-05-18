@@ -487,11 +487,39 @@ export const checkHotspotOperatorNFTOwnership = async (
 	address: string
 ): Promise<boolean> => {
 	try {
-		// For simulation, return true if address ends with '1'
-		return address.endsWith('1');
+		console.log('Checking if address owns a HotspotOperatorNFT:', address);
+
+		// Query the blockchain to check if the user owns any HotspotOperatorNFTs
+		const result = await fcl.query({
+			cadence: `
+				import HotspotOperatorNFT from 0xcc6a3536f37381a2
+				import NonFungibleToken from 0x631e88ae7f1d7c20
+
+				access(all) fun main(address: Address): Bool {
+					// Get the public account object for the address
+					let account = getAccount(address)
+					
+					// Try to borrow the collection capabilities
+					if let collectionRef = account.capabilities.borrow<&{HotspotOperatorNFT.HotspotOperatorNFTCollectionPublic}>(HotspotOperatorNFT.CollectionPublicPath) {
+						let ids = collectionRef.getIDs()
+						var collection: [&HotspotOperatorNFT.NFT] = []
+
+						return ids.length > 0
+					}
+						
+					
+						return false
+				}
+			`,
+			args: (arg, t) => [arg(address, t.Address)],
+		});
+
+		console.log('NFT ownership check result:', result);
+		return Boolean(result);
 	} catch (error) {
 		console.error('Error checking NFT ownership:', error);
-		throw error;
+		// Return false on error to be safe
+		return false;
 	}
 };
 
