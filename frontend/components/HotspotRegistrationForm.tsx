@@ -242,14 +242,16 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 							</div>
 						) : (
 							<select
-								className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+								className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-800 font-medium appearance-none bg-white"
 								value={selectedNftId || ''}
 								onChange={(e) =>
 									setSelectedNftId(Number(e.target.value))
 								}
 								required
 							>
-								<option value="">Select an NFT</option>
+								<option value="" className="text-gray-500">
+									Select an NFT
+								</option>
 								{nfts.map((nft) => {
 									// Convert complex ID objects to string for use as option value and key
 									const nftId =
@@ -264,7 +266,7 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 											className={
 												nft.isRegistered
 													? 'text-gray-400'
-													: ''
+													: 'text-gray-800'
 											}
 											disabled={nft.isRegistered}
 										>
