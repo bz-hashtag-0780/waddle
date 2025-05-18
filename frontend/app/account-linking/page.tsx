@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMagic } from '@/contexts/MagicContext';
 import * as fcl from '@onflow/fcl';
@@ -23,8 +23,19 @@ type Step =
 // Linking status
 type LinkingStatus = 'idle' | 'loading' | 'error' | 'success';
 
-export default function AccountLinkingPage() {
+// Loading component for Suspense
+const AccountLinkingLoader = () => (
+	<Layout>
+		<div className="flex justify-center items-center h-64">
+			<div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+		</div>
+	</Layout>
+);
+
+// Main content component
+const AccountLinkingContent = () => {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { user, isLoading: authLoading, isAuthenticated } = useAuth();
 	const { magic } = useMagic();
 	const [currentStep, setCurrentStep] = useState<Step>('intro');
@@ -1195,5 +1206,14 @@ if acct.storage.borrow<&CapabilityFilter.AllowAllFilter>(from: CapabilityFilter.
 				</Card>
 			</div>
 		</Layout>
+	);
+};
+
+// Wrap with Suspense to handle useSearchParams() correctly
+export default function AccountLinkingPage() {
+	return (
+		<Suspense fallback={<AccountLinkingLoader />}>
+			<AccountLinkingContent />
+		</Suspense>
 	);
 }
