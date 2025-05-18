@@ -34,7 +34,7 @@ export const MagicProvider = ({ children }: { children: ReactNode }) => {
 			try {
 				// Initialize Magic with Flow extension
 				const magicInstance = new MagicBase(
-					process.env.NEXT_PUBLIC_MAGIC_API_KEY || 'pk_live_demo',
+					'pk_live_0EEEBD45455D6970',
 					{
 						extensions: [
 							new FlowExtension({
