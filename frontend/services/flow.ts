@@ -574,19 +574,6 @@ export const getFIVEGCOINBalance = async (address: string): Promise<number> => {
 	}
 };
 
-// Set up user account with required resources for NFTs and tokens
-export const setupUserAccount = async (): Promise<string> => {
-	try {
-		console.log('Setting up user account (mock)');
-		// In the real implementation, this would execute a transaction
-		// For now, just return a mock transaction ID
-		return 'mock-transaction-' + Date.now().toString();
-	} catch (error) {
-		console.error('Error setting up user account:', error);
-		throw error;
-	}
-};
-
 // Check if a user account is properly set up for NFTs and tokens
 export const isUserAccountSetup = async (address: string): Promise<boolean> => {
 	try {

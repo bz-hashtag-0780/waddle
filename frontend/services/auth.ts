@@ -3,8 +3,6 @@ import { FlowExtension } from '@magic-ext/flow';
 // Import FCL configuration
 import './fcl-config';
 import { User } from '../types/auth';
-import { isUserAccountSetup, setupUserAccount } from './flow';
-import * as fcl from '@onflow/fcl';
 
 // Define Magic type with Flow Extension
 export type Magic = MagicBase<[FlowExtension]>;
@@ -59,25 +57,6 @@ export const loginWithMagic = async (email: string): Promise<User> => {
 		address,
 		loggedIn: true,
 	};
-
-	// Check if the user account is set up for NFTs and tokens
-	// If not, set it up
-	try {
-		const isSetup = await isUserAccountSetup(address);
-
-		if (!isSetup) {
-			console.log('Setting up user account for the first time...');
-			// Set up user account with required resources
-			const txId = await setupUserAccount(magic);
-
-			// Wait for transaction to be sealed
-			await fcl.tx(txId).onceSealed();
-			console.log('Account setup complete!');
-		}
-	} catch (error) {
-		console.error('Error during account setup:', error);
-		// Continue anyway, we'll try again next time
-	}
 
 	return user;
 };

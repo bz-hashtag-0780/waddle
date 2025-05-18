@@ -1,9 +1,9 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import Button from '@/components/Button';
 
 export default function Home() {
 	const { user } = useAuth();
@@ -319,8 +319,8 @@ export default function Home() {
 										</h3>
 										<p className="mt-5 text-base text-gray-500">
 											Earn tokens automatically based on
-											your hotspot's uptime and coverage
-											quality.
+											your hotspot&apos;s uptime and
+											coverage quality.
 										</p>
 									</div>
 								</div>

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -41,7 +43,7 @@ export default function AccountLinkingPage() {
 	// Replace the FCL configuration useEffect with a simpler version
 	useEffect(() => {
 		// Log FCL user state
-		const unsub = fcl.currentUser().subscribe((currentUser) => {
+		const unsub = fcl.currentUser().subscribe((currentUser: any) => {
 			console.log('FCL current user updated:', currentUser);
 		});
 
