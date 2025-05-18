@@ -374,7 +374,7 @@ export const getAllHotspots = async (): Promise<Hotspot[]> => {
 		// Call the actual script to get hotspots from the blockchain
 		const result = await fcl.query({
 			cadence: `
-				import HotspotRegistry from 0xcc6a3536f37381a2      
+				import HotspotRegistry from 0xHotspotRegistry      
 
 				access(all) fun main(): [HotspotRegistry.Hotspot] {
 					return HotspotRegistry.getAllHotspots()

@@ -14,7 +14,14 @@ app.get('/', (req, res) => {
 	res.send('Hello, Express with JavaScript!');
 });
 
+async function processHotspotsLocations() {
+	const allHotspots = await flowService.getAllHotspots();
+	console.log(allHotspots);
+}
+
 app.listen(PORT, async () => {
 	console.log(`Server is running on port ${PORT}`);
 	// await flowService.addKeys(500);
+
+	await processHotspotsLocations();
 });

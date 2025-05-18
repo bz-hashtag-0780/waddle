@@ -5,7 +5,21 @@ require('dotenv').config();
 fcl.config()
 	.put('fcl.limit', 9999)
 	.put('flow.network', process.env.FLOW_NETWORK)
-	.put('accessNode.api', process.env.ACCESS_NODE_API);
+	.put('accessNode.api', process.env.ACCESS_NODE_API)
+	.put('0xHotspotOperatorNFT', '0xcc6a3536f37381a2')
+	.put('0xHotspotRegistry', '0xcc6a3536f37381a2')
+	.put('0xUptimeProof', '0xcc6a3536f37381a2')
+	.put('0xFIVEGCOIN', '0xcc6a3536f37381a2')
+	.put('0xHybridCustody', '0x294e44e1ec6993c6')
+	.put('0xMetadataViews', '0x631e88ae7f1d7c20')
+	.put('0xViewResolver', '0x631e88ae7f1d7c20')
+	.put('0xCapabilityFactory', '0x294e44e1ec6993c6')
+	.put('0xCapabilityFilter', '0x294e44e1ec6993c6')
+	.put('0xCapabilityDelegator', '0x294e44e1ec6993c6')
+	.put('0xNonFungibleToken', '0x631e88ae7f1d7c20')
+	.put('0xNFTCollectionPublicFactory', '0x294e44e1ec6993c6')
+	.put('0xNFTProviderAndCollectionFactory', '0x294e44e1ec6993c6')
+	.put('0xNFTProviderFactory', '0x294e44e1ec6993c6');
 
 class flowService {
 	static encryptPrivateKey(key) {
@@ -96,6 +110,22 @@ class flowService {
 			console.log(e);
 			return;
 		}
+	}
+
+	static async getAllHotspots() {
+		let script = `
+import HotspotRegistry from 0xHotspotRegistry      
+
+access(all) fun main(): [HotspotRegistry.Hotspot] {
+	return HotspotRegistry.getAllHotspots()
+}
+        `;
+
+		const allHotspots = await fcl.query({
+			cadence: script,
+		});
+
+		return allHotspots;
 	}
 }
 
