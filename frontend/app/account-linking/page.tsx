@@ -38,18 +38,11 @@ export default function AccountLinkingPage() {
 		}
 	}, [authLoading, isAuthenticated, router]);
 
-	// Add this useEffect right after the existing useEffect in the component
+	// Replace the FCL configuration useEffect with a simpler version
 	useEffect(() => {
-		// Ensure FCL is configured properly
-		console.log('Configuring FCL');
-		console.log('Current FCL config:', fcl.config());
-
-		// Log the contract addresses used by checking it in the console
-		console.log('FCL contract check - please verify in browser console');
-
-		// Simplify the FCL subscription to avoid type issues
-		const unsub = fcl.currentUser().subscribe((user) => {
-			console.log('FCL current user updated:', user);
+		// Log FCL user state
+		const unsub = fcl.currentUser().subscribe((currentUser) => {
+			console.log('FCL current user updated:', currentUser);
 		});
 
 		// Cleanup subscription on unmount
@@ -125,8 +118,8 @@ export default function AccountLinkingPage() {
 			try {
 				setupTxId = await fcl.mutate({
 					cadence: `
-						import HybridCustody from 0x294e44e1ec6993c6
-						import MetadataViews from 0x1d7e57aa55817448
+						import HybridCustody from 0xHybridCustody
+						import MetadataViews from 0xMetadataViews
 						
 						transaction {
 							prepare(acct: AuthAccount) {
@@ -148,9 +141,10 @@ export default function AccountLinkingPage() {
 								log("Saving ChildAccount to storage...")
 								acct.save(<-childAccount, to: HybridCustody.ChildAccountStoragePath)
 								
-								// Create public capability
+								// Create public capability - Using updated Cadence syntax
 								log("Creating public capability...")
-								let cap = acct.capabilities.storage.issue<&HybridCustody.ChildAccount{HybridCustody.ChildAccountPublic}>(HybridCustody.ChildAccountStoragePath)
+								// Using intersection type instead of restricted type
+								let cap = acct.capabilities.storage.issue<&HybridCustody.ChildAccount & HybridCustody.ChildAccountPublic>(HybridCustody.ChildAccountStoragePath)
 								acct.capabilities.publish(cap, at: HybridCustody.ChildAccountPublicPath)
 								
 								log("ChildAccount setup complete")
@@ -184,9 +178,31 @@ export default function AccountLinkingPage() {
 					'Error waiting for setup transaction to be sealed:',
 					sealError
 				);
-				throw new Error(
-					'Transaction failed to complete. Please try again.'
-				);
+
+				// Add more detailed error information
+				let errorMessage = 'Transaction failed to complete.';
+
+				// Extract Cadence error details if available
+				if (sealError instanceof Error) {
+					errorMessage = sealError.message;
+
+					// Check for Cadence runtime errors
+					if (errorMessage.includes('cadence runtime error')) {
+						console.error('Cadence Error Details:', {
+							transactionId: setupTxId,
+							errorMessage: errorMessage,
+						});
+
+						// Extract the specific error message
+						const errorMatch =
+							errorMessage.match(/error: ([^\n]+)/);
+						if (errorMatch && errorMatch[1]) {
+							errorMessage = `Cadence Error: ${errorMatch[1]}`;
+						}
+					}
+				}
+
+				throw new Error(errorMessage);
 			}
 
 			// SECOND TRANSACTION: Publish to Parent
@@ -198,7 +214,7 @@ export default function AccountLinkingPage() {
 			try {
 				publishTxId = await fcl.mutate({
 					cadence: `
-						import HybridCustody from 0x294e44e1ec6993c6
+						import HybridCustody from 0xHybridCustody
 						
 						transaction(parentAddress: Address) {
 							prepare(acct: AuthAccount) {
@@ -317,7 +333,7 @@ export default function AccountLinkingPage() {
 			try {
 				setupTxId = await fcl.mutate({
 					cadence: `
-						import HybridCustody from 0x294e44e1ec6993c6
+						import HybridCustody from 0xHybridCustody
 						
 						transaction {
 							prepare(acct: AuthAccount) {
@@ -394,7 +410,7 @@ export default function AccountLinkingPage() {
 			try {
 				claimTxId = await fcl.mutate({
 					cadence: `
-						import HybridCustody from 0x294e44e1ec6993c6
+						import HybridCustody from 0xHybridCustody
 						
 						transaction(childAddress: Address) {
 							prepare(acct: AuthAccount) {
@@ -1004,8 +1020,48 @@ export default function AccountLinkingPage() {
 
 	// Add a debugging component to show authentication status
 	const DebugInfo = () => {
+		const [contractStatus, setContractStatus] = useState<string>('');
+
 		// Only show in development
 		if (process.env.NODE_ENV !== 'development') return null;
+
+		// Function to check if the HybridCustody contract exists
+		const checkContract = async () => {
+			try {
+				setContractStatus('Checking...');
+				// Try to get an account for the HybridCustody contract
+				const contractAddressStr = String(
+					fcl.config().get('0xHybridCustody') || '0x294e44e1ec6993c6'
+				);
+
+				console.log(
+					'Checking contract at address:',
+					contractAddressStr
+				);
+
+				// Lookup account info
+				const accountInfo = await fcl
+					.send([fcl.getAccount(contractAddressStr)])
+					.then(fcl.decode);
+				console.log('Contract account info:', accountInfo);
+
+				// Verify if the account exists
+				if (accountInfo && accountInfo.address) {
+					setContractStatus(
+						`✅ Contract account exists at ${accountInfo.address}`
+					);
+				} else {
+					setContractStatus('❌ Could not verify contract account');
+				}
+			} catch (error) {
+				console.error('Error checking contract:', error);
+				setContractStatus(
+					`❌ Error: ${
+						error instanceof Error ? error.message : 'Unknown error'
+					}`
+				);
+			}
+		};
 
 		return (
 			<div className="mb-4 p-3 bg-gray-100 rounded-md text-xs">
@@ -1015,31 +1071,42 @@ export default function AccountLinkingPage() {
 				<div>Flow Wallet: {flowAddress || 'Not connected'}</div>
 				<div>Current step: {currentStep}</div>
 				<div>Linking status: {linkingStatus}</div>
-				<button
-					onClick={async () => {
-						console.log('Magic info:', magic);
-						console.log(
-							'FCL user:',
-							await fcl.currentUser().snapshot()
-						);
-						if (magic) {
-							try {
-								console.log(
-									'Magic user info:',
-									await magic.user.getInfo()
-								);
-							} catch (e) {
-								console.error(
-									'Error getting Magic user info:',
-									e
-								);
+				<div>Contract status: {contractStatus || 'Not checked'}</div>
+				<div className="flex space-x-2 mt-2">
+					<button
+						onClick={async () => {
+							console.log('Magic info:', magic);
+							console.log(
+								'FCL user:',
+								await fcl.currentUser().snapshot()
+							);
+							if (magic) {
+								try {
+									console.log(
+										'Magic user info:',
+										await magic.user.getInfo()
+									);
+								} catch (e) {
+									console.error(
+										'Error getting Magic user info:',
+										e
+									);
+								}
 							}
-						}
-					}}
-					className="mt-1 px-2 py-1 bg-blue-500 text-white rounded text-xs"
-				>
-					Log Auth Details
-				</button>
+						}}
+						className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
+					>
+						Log Auth Details
+					</button>
+					<button
+						onClick={() => {
+							void checkContract();
+						}}
+						className="px-2 py-1 bg-green-500 text-white rounded text-xs"
+					>
+						Check Contract
+					</button>
+				</div>
 			</div>
 		);
 	};
