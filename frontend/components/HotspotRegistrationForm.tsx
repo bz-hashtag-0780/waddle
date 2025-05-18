@@ -199,7 +199,8 @@ const HotspotRegistrationForm: React.FC<HotspotRegistrationFormProps> = ({
 											value={nftId}
 										>
 											{nft.metadata?.name ||
-												`NFT #${nftId}`}
+												'Unnamed NFT'}{' '}
+											(ID: {nftId})
 										</option>
 									);
 								})}
