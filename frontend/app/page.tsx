@@ -149,7 +149,7 @@ export default function Home() {
 								</Link>
 								<Link
 									href="https://opensea.io/collection/waddle-5g-operators"
-									className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									className="font-medium text-gray-500 hover:text-gray-900"
 									target="_blank"
 									rel="noopener noreferrer"
 								>
